@@ -1,802 +1,955 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0d2137" />
-  <meta name="description" content="Catálogo de videos para visitas a plantas industriales" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="CatálogoVideos" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <title>Catálogo de Videos</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Catálogo de Videos · Hitec</title>
+  <meta name="description" content="Catálogo de videos técnicos Hitec SRL">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Catálogo">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --navy-deep:    #0d2137;
-      --navy:         #1a3a5c;
-      --navy-mid:     #1e4976;
-      --blue:         #2563eb;
-      --blue-light:   #3b82f6;
-      --gray-100:     #f1f5f9;
-      --gray-200:     #e2e8f0;
-      --gray-400:     #94a3b8;
-      --gray-600:     #475569;
-      --white:        #ffffff;
-      --card-radius:  10px;
-      --shadow:       0 2px 8px rgba(0,0,0,0.18);
-      --shadow-hover: 0 6px 20px rgba(0,0,0,0.28);
-      --fav-color:    #f59e0b;
-      --warn-color:   #f97316;
+      --bg: #0f172a;
+      --bg2: #1e293b;
+      --bg3: #334155;
+      --accent: #3b82f6;
+      --accent2: #1d4ed8;
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --chip-bg: #334155;
+      --chip-active: #3b82f6;
+      --star: #f59e0b;
+      --orange: #f97316;
+      --modal-bg: rgba(0,0,0,0.85);
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
     }
 
-    /* ── ALTO CONTRASTE ──────────────────────────────────────── */
     body.hc {
-      --navy-deep:  #000000;
-      --navy:       #001428;
-      --navy-mid:   #002040;
-      --gray-100:   #e0e8f0;
-      --gray-200:   #c0cfe0;
-      --gray-400:   #7090b0;
-      --gray-600:   #304060;
-      --white:      #ffffff;
-      --shadow:     0 2px 8px rgba(0,0,0,0.5);
+      --bg: #000;
+      --bg2: #111;
+      --bg3: #222;
+      --accent: #60a5fa;
+      --text: #fff;
+      --text2: #ccc;
+      --card-bg: #111;
+      --card-border: #444;
+      --chip-bg: #222;
+      font-size: 17px;
     }
-    body.hc .card-name    { font-size: 0.92rem; font-weight: 700; }
-    body.hc #searchInput  { font-size: 1.05rem; }
-    body.hc .chip         { font-size: 0.82rem; padding: 6px 14px; }
 
-    html, body {
-      height: 100%;
+    body {
+      background: var(--bg);
+      color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--gray-100);
-      color: var(--navy-deep);
+      min-height: 100vh;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── PIN SCREEN ──────────────────────────────────────────── */
-    #pinScreen {
+    /* ── PIN SCREEN ── */
+    #pin-screen {
       position: fixed; inset: 0;
-      background: #0d2137;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      z-index: 9999; gap: 24px; padding: 32px 24px;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      flex-direction: column;
+      gap: 24px;
+      padding: 32px;
     }
-    #pinScreen.hidden { display: none; }
-    .pin-logo { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-    .pin-logo h2 { font-size: 1.2rem; font-weight: 700; color: #fff; text-align: center; }
-    .pin-logo p  { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; }
+    #pin-screen.hidden { display: none; }
+
+    .pin-logo {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .pin-logo span { color: var(--accent); }
+
     .pin-box {
-      background: #1a3a5c; border-radius: 14px;
-      padding: 28px 24px; width: 100%; max-width: 320px;
-      display: flex; flex-direction: column; gap: 16px;
+      background: var(--bg2);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: var(--shadow);
     }
-    .pin-label { font-size: 0.8rem; color: #94a3b8; text-align: center; letter-spacing: 0.04em; }
-    #pinInput {
-      width: 100%; padding: 14px; border: 2px solid rgba(255,255,255,0.1);
-      border-radius: 8px; background: rgba(255,255,255,0.07); color: #fff;
-      font-size: 1.3rem; font-weight: 700; letter-spacing: 0.3em;
-      text-align: center; outline: none; transition: border-color 0.2s;
-      -webkit-text-security: disc;
+    .pin-box h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-align: center;
+      color: var(--text);
     }
-    #pinInput:focus { border-color: #3b82f6; }
-    #pinInput.error { border-color: #ef4444; animation: shake 0.3s ease; }
+    .pin-box p {
+      font-size: 0.85rem;
+      color: var(--text2);
+      text-align: center;
+    }
+
+    /* CLAVE: input tipo password, sin restricciones numéricas */
+    #pin-input {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 1.1rem;
+      background: var(--bg3);
+      border: 2px solid var(--card-border);
+      border-radius: 8px;
+      color: var(--text);
+      text-align: center;
+      letter-spacing: 2px;
+      outline: none;
+      transition: border-color 0.2s;
+      /* SIN type=number, SIN inputmode=numeric, SIN maxlength=4 */
+    }
+    #pin-input:focus { border-color: var(--accent); }
+    #pin-input.error { border-color: #ef4444; animation: shake 0.3s; }
+
     @keyframes shake {
       0%,100% { transform: translateX(0); }
-      25%      { transform: translateX(-8px); }
-      75%      { transform: translateX(8px); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
     }
-    #pinBtn {
-      width: 100%; padding: 14px; background: #2563eb; color: #fff;
-      border: none; border-radius: 8px; font-size: 1rem; font-weight: 700;
-      cursor: pointer; transition: background 0.2s;
-    }
-    #pinBtn:hover { background: #1d4ed8; }
-    .pin-error { font-size: 0.8rem; color: #f87171; text-align: center; min-height: 18px; }
 
-    /* ── HEADER ──────────────────────────────────────────────── */
+    .pin-error {
+      font-size: 0.8rem;
+      color: #ef4444;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-primary:active { background: var(--accent2); transform: scale(0.98); }
+
+    /* ── APP ── */
+    #app { display: none; flex-direction: column; min-height: 100vh; }
+    #app.visible { display: flex; }
+
+    /* Header */
     header {
-      background: var(--navy-deep); color: var(--white);
-      padding: 12px 16px 10px;
       position: sticky; top: 0; z-index: 100;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+      background: var(--bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 16px;
+      display: flex; flex-direction: column; gap: 10px;
     }
+
     .header-top {
-      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px;
     }
-    .header-icon { width: 32px; height: 32px; flex-shrink: 0; }
-    .header-title { flex: 1; }
-    .header-title h1 { font-size: 1.05rem; font-weight: 700; line-height: 1.2; }
-    .header-title p  { font-size: 0.68rem; color: var(--gray-400); margin-top: 1px; text-transform: uppercase; letter-spacing: 0.03em; }
 
-    .header-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .logo {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      white-space: nowrap;
+    }
+    .logo span { color: var(--accent); }
+
+    .header-actions {
+      display: flex; align-items: center; gap: 6px;
+    }
+
     .icon-btn {
-      width: 34px; height: 34px; border: none; border-radius: 8px;
-      background: rgba(255,255,255,0.08); color: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: background 0.2s; flex-shrink: 0;
-      font-size: 0.85rem;
+      background: var(--bg2);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 7px 9px;
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex; align-items: center;
+      transition: color 0.2s, background 0.2s;
+      line-height: 1;
     }
-    .icon-btn:hover   { background: rgba(255,255,255,0.16); }
-    .icon-btn.active  { background: var(--blue); }
+    .icon-btn:hover, .icon-btn.active { color: var(--text); background: var(--bg3); }
 
-    .search-bar { display: flex; gap: 8px; align-items: center; }
-    .search-wrap { flex: 1; position: relative; }
+    /* Search */
+    .search-wrap {
+      position: relative;
+    }
+    #search {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      background: var(--bg2);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #search::placeholder { color: var(--text2); }
+    #search:focus { border-color: var(--accent); }
     .search-icon {
-      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
-      color: var(--gray-400); pointer-events: none;
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text2); pointer-events: none;
+      font-size: 0.9rem;
     }
-    #searchInput {
-      width: 100%; padding: 10px 12px 10px 36px;
-      border: 2px solid transparent; border-radius: 8px;
-      background: rgba(255,255,255,0.1); color: var(--white);
-      font-size: 0.95rem; outline: none;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    #searchInput::placeholder { color: rgba(255,255,255,0.4); }
-    #searchInput:focus { background: rgba(255,255,255,0.15); border-color: var(--blue-light); }
-    #clearBtn {
-      display: none; padding: 10px 12px;
-      background: var(--navy-mid); color: var(--white);
-      border: none; border-radius: 8px; font-size: 0.82rem;
-      font-weight: 600; cursor: pointer; white-space: nowrap;
-      transition: background 0.2s;
-    }
-    #clearBtn:hover { background: var(--blue); }
 
-    /* ── BARRA DE ESTADO ─────────────────────────────────────── */
-    #statusBar {
-      background: var(--navy); padding: 6px 16px;
-      font-size: 0.75rem; color: var(--gray-400);
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    #statusBar span { color: var(--white); font-weight: 600; }
-
-    /* ── FILTER CHIPS ────────────────────────────────────────── */
-    #filtersRow {
-      background: var(--navy); padding: 0 16px 10px;
-      display: flex; gap: 6px; overflow-x: auto;
+    /* Filter chips */
+    #chips-wrap {
+      padding: 0 16px 10px;
+      display: flex; gap: 8px; overflow-x: auto;
       scrollbar-width: none;
     }
-    #filtersRow::-webkit-scrollbar { display: none; }
+    #chips-wrap::-webkit-scrollbar { display: none; }
 
     .chip {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 5px 12px; border-radius: 20px; font-size: 0.75rem;
-      font-weight: 600; white-space: nowrap; cursor: pointer;
-      border: 1.5px solid rgba(255,255,255,0.15);
-      background: transparent; color: var(--gray-400);
-      transition: all 0.18s; flex-shrink: 0;
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background: var(--chip-bg);
+      color: var(--text2);
+      border: 1px solid var(--card-border);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
     }
-    .chip:hover  { border-color: var(--blue-light); color: var(--white); }
-    .chip.active { background: var(--blue); border-color: var(--blue); color: var(--white); }
-    .chip.fav-chip.active { background: var(--fav-color); border-color: var(--fav-color); color: #000; }
-
-    .chip-divider {
-      width: 1px; background: rgba(255,255,255,0.1);
-      flex-shrink: 0; margin: 4px 2px;
+    .chip.active {
+      background: var(--chip-active);
+      color: #fff;
+      border-color: var(--chip-active);
     }
 
-    /* ── GRILLA ──────────────────────────────────────────────── */
+    /* Count bar */
+    #count-bar {
+      padding: 4px 16px 8px;
+      font-size: 0.78rem;
+      color: var(--text2);
+    }
+
+    /* Grid / List */
     #grid {
+      padding: 0 12px 80px;
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px; padding: 14px;
-      max-width: 1100px; margin: 0 auto;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
     }
-    @media (min-width: 600px) {
-      #grid { grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 18px; }
-    }
-    @media (min-width: 900px) {
-      #grid { grid-template-columns: repeat(4, 1fr); }
+    #grid.list-mode {
+      grid-template-columns: 1fr;
+      gap: 8px;
     }
 
-    /* ── VISTA LISTA ─────────────────────────────────────────── */
-    #grid.list-view {
-      grid-template-columns: 1fr !important;
-      gap: 8px; padding: 12px;
-    }
-    #grid.list-view .card {
-      display: flex; flex-direction: row; align-items: center;
-    }
-    #grid.list-view .card-thumb {
-      width: 110px; min-width: 110px;
-      aspect-ratio: unset; height: 65px;
-    }
-    #grid.list-view .card-info {
-      flex: 1; padding: 8px 12px;
-      display: flex; flex-direction: column; gap: 3px;
-    }
-    #grid.list-view .card-name {
-      -webkit-line-clamp: 1; font-size: 0.85rem;
-    }
-    #grid.list-view .fav-btn {
-      top: 50%; transform: translateY(-50%); left: auto; right: 8px;
-    }
-
-    /* ── CARD ────────────────────────────────────────────────── */
+    /* Card */
     .card {
-      background: var(--white); border-radius: var(--card-radius);
-      box-shadow: var(--shadow); overflow: hidden; cursor: pointer;
-      text-decoration: none; color: inherit; display: block;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s;
       position: relative;
-      transition: transform 0.18s ease, box-shadow 0.18s ease;
-      -webkit-tap-highlight-color: transparent;
     }
-    .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
-    .card:active { transform: translateY(0); box-shadow: var(--shadow); }
+    .card:active { transform: scale(0.97); }
 
-    /* Indicador de metadatos incompletos */
-    .card.incomplete::before {
-      content: '';
-      position: absolute; top: 6px; right: 6px;
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--warn-color); z-index: 10;
-      box-shadow: 0 0 0 2px rgba(0,0,0,0.3);
+    /* List mode card */
+    #grid.list-mode .card {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      border-radius: 10px;
+    }
+    #grid.list-mode .thumb-wrap {
+      width: 100px;
+      height: 64px;
+      flex-shrink: 0;
+      border-radius: 0;
+    }
+    #grid.list-mode .card-body {
+      padding: 10px 12px;
+      flex: 1;
+    }
+    #grid.list-mode .card-title {
+      font-size: 0.85rem;
+      -webkit-line-clamp: 2;
+    }
+    #grid.list-mode .card-meta {
+      font-size: 0.72rem;
     }
 
-    /* ── THUMBNAIL ───────────────────────────────────────────── */
-    .card-thumb {
-      width: 100%; aspect-ratio: 16/9;
-      background: var(--navy-deep); position: relative; overflow: hidden;
+    /* Thumbnail */
+    .thumb-wrap {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--bg3);
+      position: relative;
+      overflow: hidden;
     }
-    /* Skeleton loader */
-    .thumb-skeleton {
-      position: absolute; inset: 0; z-index: 1;
-      background: linear-gradient(90deg, #1a3a5c 25%, #244f7a 50%, #1a3a5c 75%);
+    .thumb-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .thumb-wrap img.loaded { opacity: 1; }
+
+    /* Skeleton */
+    .skeleton {
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, var(--bg3) 25%, var(--bg2) 50%, var(--bg3) 75%);
       background-size: 200% 100%;
-      animation: shimmer 1.6s infinite;
+      animation: shimmer 1.4s infinite;
     }
+    .skeleton.hidden { display: none; }
+
     @keyframes shimmer {
-      0%   { background-position: 200% 0; }
+      0% { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
-    .thumb-skeleton.done { display: none; }
 
-    /* Play icon placeholder (debajo del skeleton) */
-    .thumb-placeholder {
-      position: absolute; inset: 0; z-index: 0;
+    /* Play overlay */
+    .play-overlay {
+      position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, var(--navy-deep) 0%, var(--navy-mid) 100%);
+      opacity: 0;
+      transition: opacity 0.2s;
+      background: rgba(0,0,0,0.3);
     }
+    .card:hover .play-overlay { opacity: 1; }
     .play-icon {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: rgba(255,255,255,0.12);
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      color: #111;
     }
-    .card-thumb img {
-      position: absolute; inset: 0; z-index: 2;
-      width: 100%; height: 100%; object-fit: cover;
-      opacity: 0; transition: opacity 0.4s ease;
-    }
-    .card-thumb img.loaded { opacity: 1; }
-    .card-thumb::after {
-      content: ''; position: absolute; inset: 0; z-index: 3;
-      background: rgba(37,99,235,0); transition: background 0.2s;
-    }
-    .card:hover .card-thumb::after { background: rgba(37,99,235,0.12); }
 
-    /* ── FAVORITO BTN ────────────────────────────────────────── */
-    .fav-btn {
-      position: absolute; top: 6px; left: 6px; z-index: 10;
-      width: 28px; height: 28px; border-radius: 50%;
-      background: rgba(0,0,0,0.45); border: none; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.85rem; line-height: 1;
-      transition: background 0.2s, transform 0.15s;
-      -webkit-tap-highlight-color: transparent;
+    /* Orange dot — card without metadata */
+    .dot-incomplete {
+      position: absolute;
+      top: 8px; right: 8px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--orange);
+      border: 2px solid var(--card-bg);
+      z-index: 2;
     }
-    .fav-btn:hover    { background: rgba(0,0,0,0.65); transform: scale(1.15); }
-    .fav-btn.active   { background: rgba(245,158,11,0.85); }
 
-    /* ── CARD INFO ───────────────────────────────────────────── */
-    .card-info { padding: 9px 11px 11px; }
-    .card-name {
-      font-size: 0.81rem; font-weight: 600; color: var(--navy-deep);
-      line-height: 1.3;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    /* Card body */
+    .card-body {
+      padding: 10px 10px 8px;
+    }
+    .card-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      line-height: 1.35;
+      color: var(--text);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
+      margin-bottom: 5px;
     }
     .card-meta {
-      margin-top: 4px; font-size: 0.69rem; color: var(--gray-600);
-      display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
+      font-size: 0.7rem;
+      color: var(--text2);
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    .card-tag {
-      display: inline-block; margin-top: 5px; padding: 2px 6px;
-      background: var(--gray-100); border-radius: 4px;
-      font-size: 0.63rem; font-weight: 600; color: var(--navy);
-      text-transform: uppercase; letter-spacing: 0.04em;
+
+    /* Star favorite */
+    .star-btn {
+      position: absolute;
+      bottom: 8px; right: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 4px;
+      color: var(--text2);
+      transition: transform 0.15s, color 0.15s;
+      z-index: 2;
+    }
+    .star-btn.fav { color: var(--star); }
+    .star-btn:active { transform: scale(1.3); }
+
+    #grid.list-mode .star-btn {
+      position: static;
+      margin-left: auto;
+      flex-shrink: 0;
+      padding: 12px;
     }
 
-    /* ── ESTADOS ─────────────────────────────────────────────── */
-    #emptyState, #loadingState, #errorState {
-      display: none; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 60px 20px; text-align: center; color: var(--gray-600); gap: 12px;
+    /* Empty state */
+    #empty {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text2);
+      font-size: 0.9rem;
+      display: none;
     }
-    #emptyState svg, #loadingState svg, #errorState svg { opacity: 0.35; }
-    #emptyState p, #loadingState p, #errorState p { font-size: 0.9rem; line-height: 1.5; }
-    #emptyState strong, #errorState strong {
-      font-size: 1rem; color: var(--navy); display: block; margin-bottom: 4px;
+
+    /* Modal */
+    #modal {
+      position: fixed; inset: 0;
+      background: var(--modal-bg);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #modal.open { display: flex; }
+
+    .modal-box {
+      background: var(--bg2);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 760px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.7);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 14px 16px 12px;
+      gap: 12px;
+    }
+    .modal-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.4;
+      flex: 1;
+    }
+    .modal-close {
+      background: var(--bg3);
+      border: none;
+      color: var(--text);
+      border-radius: 6px;
+      width: 30px; height: 30px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-meta {
+      padding: 0 16px 12px;
+      font-size: 0.78rem;
+      color: var(--text2);
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .meta-tag {
+      background: var(--chip-bg);
+      border-radius: 4px;
+      padding: 2px 8px;
+    }
+    .video-frame {
+      width: 100%;
+      aspect-ratio: 16/9;
+    }
+    .video-frame iframe {
+      width: 100%; height: 100%;
+      border: none;
+      display: block;
+    }
+
+    /* Loading spinner */
+    #loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+      color: var(--text2);
+      font-size: 0.9rem;
+      gap: 10px;
     }
     .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid var(--gray-200); border-top-color: var(--blue);
-      border-radius: 50%; animation: spin 0.8s linear infinite;
+      width: 20px; height: 20px;
+      border: 2px solid var(--card-border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── FOOTER ──────────────────────────────────────────────── */
-    footer {
-      text-align: center; padding: 14px; font-size: 0.7rem;
-      color: var(--gray-400); border-top: 1px solid var(--gray-200); margin-top: 6px;
+    /* FAB invisible scroll-to-top */
+    #fab {
+      position: fixed;
+      bottom: 20px; right: 16px;
+      width: 42px; height: 42px;
+      background: var(--accent);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: none;
+      align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(59,130,246,0.5);
+      z-index: 200;
     }
+    #fab.show { display: flex; }
   </style>
 </head>
 <body>
 
-  <!-- ── PIN SCREEN ────────────────────────────────────────────── -->
-  <div id="pinScreen">
-    <div class="pin-logo">
-      <svg width="56" height="56" viewBox="0 0 36 36" fill="none">
-        <rect width="36" height="36" rx="8" fill="#1a3a5c"/>
-        <path d="M10 12h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
-        <path d="M15.5 15.5l6 2.5-6 2.5v-5z" fill="#2563eb"/>
-      </svg>
-      <h2>Catálogo de Videos</h2>
-      <p>Acceso restringido</p>
-    </div>
-    <div class="pin-box">
-      <p class="pin-label">Ingrese el código de acceso</p>
-      <input id="pinInput" type="password" inputmode="numeric" maxlength="12"
-             placeholder="••••" autocomplete="off"
-             onkeydown="if(event.key==='Enter') checkPin()" />
-      <p class="pin-error" id="pinError"></p>
-      <button id="pinBtn" onclick="checkPin()">Ingresar</button>
-    </div>
+<!-- ── PIN SCREEN ── -->
+<div id="pin-screen">
+  <div class="pin-logo">Hitec <span>SRL</span></div>
+  <div class="pin-box">
+    <h2>Acceso al catálogo</h2>
+    <p>Ingrese la clave de acceso</p>
+    <!--
+      CORRECCIÓN: input type="password" sin inputmode ni maxlength numérico.
+      Acepta cualquier combinación alfanumérica como "Hitec2025".
+    -->
+    <input
+      id="pin-input"
+      type="password"
+      autocomplete="current-password"
+      autocorrect="off"
+      autocapitalize="off"
+      spellcheck="false"
+      placeholder="••••••••"
+    >
+    <div class="pin-error" id="pin-error"></div>
+    <button class="btn-primary" id="pin-btn">Ingresar</button>
   </div>
+</div>
 
-  <!-- ── HEADER ────────────────────────────────────────────────── -->
+<!-- ── APP ── -->
+<div id="app">
+
   <header>
     <div class="header-top">
-      <svg class="header-icon" viewBox="0 0 36 36" fill="none">
-        <rect width="36" height="36" rx="8" fill="#1a3a5c"/>
-        <path d="M10 12h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
-        <path d="M15.5 15.5l6 2.5-6 2.5v-5z" fill="#2563eb"/>
-      </svg>
-      <div class="header-title">
-        <h1>Catálogo de Videos</h1>
-        <p>Medición · Control · Calibración</p>
-      </div>
+      <div class="logo">Hitec <span>Catálogo</span></div>
       <div class="header-actions">
-        <!-- Vista lista/grilla -->
-        <button class="icon-btn" id="viewBtn" onclick="toggleView()" title="Cambiar vista">
-          <svg id="viewIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-          </svg>
-        </button>
-        <!-- Alto contraste -->
-        <button class="icon-btn" id="hcBtn" onclick="toggleContrast()" title="Alto contraste">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="9"/>
-            <path d="M12 3v18" stroke-width="2"/>
-            <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/>
-          </svg>
-        </button>
+        <button class="icon-btn" id="btn-hc" title="Alto contraste">◑</button>
+        <button class="icon-btn" id="btn-view" title="Cambiar vista">⊞</button>
       </div>
     </div>
-    <div class="search-bar">
-      <div class="search-wrap">
-        <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input id="searchInput" type="search" inputmode="search"
-               autocomplete="off" autocorrect="off" spellcheck="false"
-               placeholder="Buscar por nombre, equipo, industria..."
-               aria-label="Buscar videos" />
-      </div>
-      <button id="clearBtn" onclick="clearSearch()">✕ Limpiar</button>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input id="search" type="search" placeholder="Buscar video..." autocomplete="off">
     </div>
   </header>
 
-  <!-- ── STATUS BAR ────────────────────────────────────────────── -->
-  <div id="statusBar">
-    <div id="resultCount">Cargando catálogo...</div>
-    <div id="lastUpdate"></div>
-  </div>
-
-  <!-- ── FILTER CHIPS ──────────────────────────────────────────── -->
-  <div id="filtersRow"></div>
-
-  <!-- ── LOADING ───────────────────────────────────────────────── -->
-  <div id="loadingState" style="display:flex;">
-    <div class="spinner"></div>
-    <p>Cargando catálogo de videos...</p>
-  </div>
-
-  <!-- ── ERROR ─────────────────────────────────────────────────── -->
-  <div id="errorState">
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5">
-      <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
-    </svg>
-    <p><strong>No se pudo cargar el catálogo</strong>Verifique su conexión e intente nuevamente.</p>
-    <button onclick="loadCatalog()" style="margin-top:8px;padding:10px 20px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:0.9rem;cursor:pointer;font-weight:600;">Reintentar</button>
-  </div>
-
-  <!-- ── GRILLA ─────────────────────────────────────────────────── -->
+  <div id="chips-wrap"></div>
+  <div id="count-bar"></div>
+  <div id="loading"><div class="spinner"></div> Cargando catálogo…</div>
   <div id="grid"></div>
+  <div id="empty">Sin resultados para esta búsqueda.</div>
 
-  <!-- ── VACÍO ─────────────────────────────────────────────────── -->
-  <div id="emptyState">
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5">
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M8 11h6"/>
-    </svg>
-    <p><strong>Sin resultados</strong>Ningún video coincide con la búsqueda actual.</p>
+</div>
+
+<!-- Modal video -->
+<div id="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title"></div>
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-meta" id="modal-meta"></div>
+    <div class="video-frame">
+      <iframe id="modal-iframe" allowfullscreen allow="autoplay"></iframe>
+    </div>
   </div>
+</div>
 
-  <footer>Catálogo de Videos · Actualización automática vía Google Drive</footer>
+<button id="fab" title="Volver arriba">↑</button>
 
-  <script>
-    // ── CONFIGURACIÓN ────────────────────────────────────────────
-    const CSV_URL     = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWbuOhAfDBTsyJKONMNcf9Lw3F6aaT1-Ovrif_ixyclRT1HeNNKdg415q4NZ74XchXvyUstM2Xfqyh/pub?gid=1463725900&single=true&output=csv';
-    const ACCESS_PIN  = 'Hitec2025';
-    const PROXY_TOKEN = 'Hv9kP3mX7qZ';
-    const PROXY       = 'https://script.google.com/macros/s/AKfycbz6Mzjzueo0vdzQVyi670FTpxDvSmgXD39MVD4D0O2Wz64yHrLP-z_-hbQbJ1M0fSXTtw/exec';
+<script>
+  // ── CONFIG ──
+  const ACCESS_PIN  = 'Hitec2025';
+  const PROXY_URL   = 'https://script.google.com/macros/s/AKfycbz6Mzjzueo0vdzQVyi670FTpxDvSmgXD39MVD4D0O2Wz64yHrLP-z_-hbQbJ1M0fSXTtw/exec';
+  const TOKEN       = 'Hv9kP3mX7qZ';
+  const CSV_URL     = 'https://docs.google.com/spreadsheets/d/1tFDEG67WBAXGkJLEtjRfT6sQ1Q8WVi36FGrP-7W4lvg/export?format=csv&gid=1463725900';
 
-    // ── PIN ──────────────────────────────────────────────────────
-    function checkPin() {
-      const input = document.getElementById('pinInput');
-      const error = document.getElementById('pinError');
-      if (input.value === ACCESS_PIN) {
-        sessionStorage.setItem('cat_auth', '1');
-        document.getElementById('pinScreen').classList.add('hidden');
-        loadCatalog();
+  // ── STATE ──
+  let videos        = [];
+  let favorites     = JSON.parse(localStorage.getItem('hc_favs') || '[]');
+  let activeChip    = null;
+  let listMode      = localStorage.getItem('hc_view') === 'list';
+  let highContrast  = localStorage.getItem('hc_hc') === '1';
+
+  // ── PIN LOGIC ──
+  const pinScreen = document.getElementById('pin-screen');
+  const pinInput  = document.getElementById('pin-input');
+  const pinBtn    = document.getElementById('pin-btn');
+  const pinError  = document.getElementById('pin-error');
+  const app       = document.getElementById('app');
+
+  function checkPin() {
+    const val = pinInput.value.trim();
+    if (val === ACCESS_PIN) {
+      sessionStorage.setItem('hc_auth', '1');
+      pinScreen.classList.add('hidden');
+      app.classList.add('visible');
+      initApp();
+    } else {
+      pinError.textContent = 'Clave incorrecta. Intente de nuevo.';
+      pinInput.classList.add('error');
+      pinInput.value = '';
+      setTimeout(() => pinInput.classList.remove('error'), 500);
+    }
+  }
+
+  pinBtn.addEventListener('click', checkPin);
+  pinInput.addEventListener('keydown', e => { if (e.key === 'Enter') checkPin(); });
+
+  // Auto-login si ya autenticó en esta sesión
+  if (sessionStorage.getItem('hc_auth') === '1') {
+    pinScreen.classList.add('hidden');
+    app.classList.add('visible');
+    initApp();
+  }
+
+  // ── CSV PARSER ──
+  function parseCSV(text) {
+    const rows = [];
+    let cur = '', inQ = false;
+    const fields = [];
+    const push = () => { fields.push(cur); cur = ''; };
+
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (c === '"') {
+        if (inQ && text[i+1] === '"') { cur += '"'; i++; }
+        else inQ = !inQ;
+      } else if (c === ',' && !inQ) {
+        push();
+      } else if ((c === '\n' || c === '\r') && !inQ) {
+        push();
+        if (fields.length > 1 || fields[0]) rows.push([...fields]);
+        fields.length = 0;
+        if (c === '\r' && text[i+1] === '\n') i++;
       } else {
-        error.textContent = 'Código incorrecto. Intente nuevamente.';
-        input.classList.add('error');
-        input.value = '';
-        setTimeout(() => input.classList.remove('error'), 400);
-        input.focus();
+        cur += c;
       }
     }
+    push();
+    if (fields.length > 1 || fields[0]) rows.push([...fields]);
+    return rows;
+  }
 
-    if (sessionStorage.getItem('cat_auth') === '1') {
-      document.getElementById('pinScreen').classList.add('hidden');
-    } else {
-      document.addEventListener('DOMContentLoaded', () =>
-        document.getElementById('pinInput').focus()
+  function extractId(url) {
+    const m = url && url.match(/\/d\/([\w-]+)/);
+    return m ? m[1] : null;
+  }
+
+  function thumbUrl(fileId) {
+    return `${PROXY_URL}?id=${fileId}&token=${TOKEN}`;
+  }
+
+  // ── INIT ──
+  function initApp() {
+    applyPrefs();
+    fetchData();
+  }
+
+  function applyPrefs() {
+    document.body.classList.toggle('hc', highContrast);
+    document.getElementById('btn-hc').classList.toggle('active', highContrast);
+
+    const grid = document.getElementById('grid');
+    grid.classList.toggle('list-mode', listMode);
+    document.getElementById('btn-view').textContent = listMode ? '⊟' : '⊞';
+    document.getElementById('btn-view').classList.toggle('active', listMode);
+  }
+
+  async function fetchData() {
+    try {
+      const res = await fetch(CSV_URL + '&t=' + Date.now());
+      const text = await res.text();
+      const rows = parseCSV(text);
+
+      // Primera fila = headers
+      const headers = rows[0].map(h => h.trim().toLowerCase());
+      const nameIdx = headers.findIndex(h => h.includes('nombre'));
+      const catIdx  = headers.findIndex(h => h.includes('categor'));
+      const typeIdx = headers.findIndex(h => h.includes('tipo'));
+      const equipIdx= headers.findIndex(h => h.includes('equipo'));
+      const indIdx  = headers.findIndex(h => h.includes('industria') || h.includes('rubro'));
+      const linkIdx = headers.findIndex(h => h.includes('link') || h.includes('video'));
+
+      videos = rows.slice(1).map((r, i) => ({
+        id: i,
+        name: (r[nameIdx] || '').trim(),
+        cat:  (r[catIdx]  || '').trim(),
+        type: (r[typeIdx] || '').trim(),
+        equip:(r[equipIdx]|| '').trim(),
+        ind:  (r[indIdx]  || '').trim(),
+        link: (r[linkIdx] || '').trim(),
+        fileId: extractId((r[linkIdx] || '').trim()),
+      })).filter(v => v.name && v.link);
+
+      document.getElementById('loading').style.display = 'none';
+      buildChips();
+      renderCards();
+    } catch(e) {
+      document.getElementById('loading').innerHTML = '⚠️ Error al cargar el catálogo. Compruebe la conexión.';
+    }
+  }
+
+  // ── CHIPS ──
+  function buildChips() {
+    const cats = [...new Set(videos.map(v => v.cat).filter(Boolean))].sort();
+    const wrap = document.getElementById('chips-wrap');
+    wrap.innerHTML = '';
+
+    const all = chip('Todos', null);
+    wrap.appendChild(all);
+    if (favorites.length) wrap.appendChild(chip('⭐ Favoritos', '__favs__'));
+    cats.forEach(c => wrap.appendChild(chip(c, c)));
+  }
+
+  function chip(label, value) {
+    const el = document.createElement('button');
+    el.className = 'chip' + (activeChip === value ? ' active' : '');
+    el.textContent = label;
+    el.addEventListener('click', () => {
+      activeChip = activeChip === value ? null : value;
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      el.classList.toggle('active', activeChip === value);
+      if (activeChip === null) all.classList.add('active');
+      renderCards();
+    });
+    const all = el; // alias for Todos
+    if (value === null) el.classList.add('active');
+    return el;
+  }
+
+  // ── RENDER ──
+  function renderCards() {
+    const q    = document.getElementById('search').value.trim().toLowerCase();
+    const grid = document.getElementById('grid');
+    const empty= document.getElementById('empty');
+    grid.innerHTML = '';
+
+    let filtered = videos;
+
+    if (activeChip === '__favs__') {
+      filtered = filtered.filter(v => favorites.includes(v.id));
+    } else if (activeChip) {
+      filtered = filtered.filter(v => v.cat === activeChip);
+    }
+
+    if (q) {
+      filtered = filtered.filter(v =>
+        v.name.toLowerCase().includes(q) ||
+        v.cat.toLowerCase().includes(q)  ||
+        v.type.toLowerCase().includes(q) ||
+        v.equip.toLowerCase().includes(q)||
+        v.ind.toLowerCase().includes(q)
       );
     }
 
-    // ── ESTADO ───────────────────────────────────────────────────
-    let allVideos    = [];
-    let searchQuery  = '';
-    let activeChip   = null;   // { field: 'categoria'|'tipo', value: string } | 'favs'
-    let listView     = localStorage.getItem('cat_listview') === '1';
-    let highContrast = localStorage.getItem('cat_hc') === '1';
-    let favorites    = JSON.parse(localStorage.getItem('cat_favs') || '[]');
-    const thumbCache = {};
-
-    // Aplicar preferencias guardadas
-    if (highContrast) document.body.classList.add('hc');
-
-    // ── DRIVE HELPERS ────────────────────────────────────────────
-    function extractDriveId(link) {
-      const m = String(link || '').match(/\/d\/([a-zA-Z0-9_-]+)/);
-      return m ? m[1] : null;
-    }
-    function videoUrl(id) { return `https://drive.google.com/file/d/${id}/view`; }
-
-    // ── THUMBNAIL VÍA PROXY ──────────────────────────────────────
-    function loadThumb(img, id) {
-      if (!id) return;
-      if (thumbCache[id]) {
-        img.src = thumbCache[id];
-        img.classList.add('loaded');
-        img.closest('.card-thumb').querySelector('.thumb-skeleton')?.classList.add('done');
-        return;
-      }
-      fetch(`${PROXY}?id=${id}&token=${PROXY_TOKEN}`)
-        .then(r => r.json())
-        .then(data => {
-          if (data.src) {
-            thumbCache[id] = data.src;
-            img.src = data.src;
-            img.classList.add('loaded');
-            img.closest('.card-thumb').querySelector('.thumb-skeleton')?.classList.add('done');
-          } else {
-            img.closest('.card-thumb').querySelector('.thumb-skeleton')?.classList.add('done');
-          }
-        })
-        .catch(() => {
-          img.closest('.card-thumb')?.querySelector('.thumb-skeleton')?.classList.add('done');
-        });
-    }
-
-    // ── CARGA CSV ────────────────────────────────────────────────
-    function loadCatalog() {
-      showState('loading');
-      Papa.parse(CSV_URL, {
-        download: true, header: false, skipEmptyLines: true,
-        complete(results) {
-          allVideos = results.data.slice(1)
-            .map(row => ({
-              nombre:    (row[0] || '').trim(),
-              categoria: (row[1] || '').trim(),
-              tipo:      (row[2] || '').trim(),
-              equipos:   (row[3] || '').trim(),
-              industria: (row[4] || '').trim(),
-              id:        extractDriveId(row[5] || ''),
-            }))
-            .filter(v => v.nombre && v.id);
-
-          allVideos.sort((a, b) =>
-            a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })
-          );
-
-          document.getElementById('lastUpdate').textContent =
-            'Actualizado: ' + new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
-
-          buildChips();
-          renderAllCards();
-          applyFilter();
-          applyViewMode();
-          showState('grid');
-        },
-        error() { showState('error'); }
-      });
-    }
-
-    // ── CHIPS ────────────────────────────────────────────────────
-    function buildChips() {
-      const categorias = [...new Set(allVideos.map(v => v.categoria).filter(Boolean))].sort();
-      const tipos      = [...new Set(allVideos.map(v => v.tipo).filter(Boolean))].sort();
-      const row        = document.getElementById('filtersRow');
-
-      let html = `<button class="chip fav-chip" onclick="toggleChip('favs')" id="chip-favs">⭐ Favoritos</button>`;
-
-      if (categorias.length) {
-        html += `<div class="chip-divider"></div>`;
-        categorias.forEach(c => {
-          html += `<button class="chip" onclick="toggleChip('cat','${escAttr(c)}')" id="chip-cat-${escAttr(c)}">${escHtml(c)}</button>`;
-        });
-      }
-      if (tipos.length) {
-        html += `<div class="chip-divider"></div>`;
-        tipos.forEach(t => {
-          html += `<button class="chip" onclick="toggleChip('tipo','${escAttr(t)}')" id="chip-tipo-${escAttr(t)}">${escHtml(t)}</button>`;
-        });
-      }
-      row.innerHTML = html;
-    }
-
-    function toggleChip(field, value) {
-      if (field === 'favs') {
-        activeChip = activeChip === 'favs' ? null : 'favs';
-      } else {
-        const key = `${field}:${value}`;
-        activeChip = (activeChip && activeChip.key === key) ? null : { field, value, key };
-      }
-      updateChipUI();
-      applyFilter();
-    }
-
-    function updateChipUI() {
-      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      if (!activeChip) return;
-      if (activeChip === 'favs') {
-        document.getElementById('chip-favs')?.classList.add('active');
-      } else {
-        const prefix = activeChip.field === 'cat' ? 'chip-cat-' : 'chip-tipo-';
-        document.getElementById(`${prefix}${escAttr(activeChip.value)}`)?.classList.add('active');
-      }
-    }
-
-    // ── RENDER INICIAL ───────────────────────────────────────────
-    function renderAllCards() {
-      const grid = document.getElementById('grid');
-      grid.innerHTML = allVideos.map((v, i) => {
-        const isFav      = favorites.includes(v.id);
-        const incomplete = !v.categoria && !v.tipo && !v.equipos && !v.industria;
-        return `
-        <a class="card${incomplete ? ' incomplete' : ''}"
-           data-index="${i}" data-id="${escAttr(v.id)}"
-           data-text="${escAttr([v.nombre, v.categoria, v.tipo, v.equipos, v.industria].join(' ').toLowerCase())}"
-           data-cat="${escAttr(v.categoria)}" data-tipo="${escAttr(v.tipo)}"
-           href="${videoUrl(v.id)}" target="_blank" rel="noopener"
-           title="${escHtml(v.nombre)}">
-          <div class="card-thumb">
-            <div class="thumb-placeholder">
-              <div class="play-icon">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M5 3l14 9-14 9V3z"/></svg>
-              </div>
-            </div>
-            <div class="thumb-skeleton"></div>
-            <img data-id="${escAttr(v.id)}" alt="${escHtml(v.nombre)}" />
-          </div>
-          <div class="card-info">
-            <div class="card-name">${escHtml(v.nombre)}</div>
-            ${v.equipos || v.industria ? `<div class="card-meta">${escHtml(v.equipos || v.industria)}</div>` : ''}
-            ${v.tipo ? `<span class="card-tag">${escHtml(v.tipo)}</span>` : ''}
-          </div>
-          <button class="fav-btn${isFav ? ' active' : ''}"
-                  onclick="toggleFav(event,'${escAttr(v.id)}')"
-                  title="${isFav ? 'Quitar de favoritos' : 'Agregar a favoritos'}">
-            ${isFav ? '★' : '☆'}
-          </button>
-        </a>`;
-      }).join('');
-
-      // IntersectionObserver para lazy-load de thumbnails
-      const observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const img = entry.target.querySelector('img[data-id]');
-            if (img && !img.src) loadThumb(img, img.dataset.id);
-            observer.unobserve(entry.target);
-          }
-        });
-      }, { rootMargin: '120px' });
-
-      document.querySelectorAll('.card').forEach(c => observer.observe(c));
-    }
-
-    // ── FAVORITOS ────────────────────────────────────────────────
-    function toggleFav(e, id) {
-      e.preventDefault(); e.stopPropagation();
-      const btn = e.currentTarget;
-      if (favorites.includes(id)) {
-        favorites = favorites.filter(f => f !== id);
-        btn.classList.remove('active');
-        btn.textContent = '☆';
-        btn.title = 'Agregar a favoritos';
-      } else {
-        favorites.push(id);
-        btn.classList.add('active');
-        btn.textContent = '★';
-        btn.title = 'Quitar de favoritos';
-      }
-      localStorage.setItem('cat_favs', JSON.stringify(favorites));
-      if (activeChip === 'favs') applyFilter();
-    }
-
-    // ── FILTRO ───────────────────────────────────────────────────
-    function applyFilter() {
-      const q        = searchQuery.toLowerCase().trim();
-      const keywords = q ? q.split(/\s+/).filter(Boolean) : [];
-      const cards    = document.querySelectorAll('.card');
-      let visible    = 0;
-
-      // Ordenar: favoritos primero si chip favs activo
-      const sorted = [...cards];
-      if (activeChip === 'favs') {
-        sorted.sort((a, b) => {
-          const aFav = favorites.includes(a.dataset.id) ? -1 : 1;
-          const bFav = favorites.includes(b.dataset.id) ? -1 : 1;
-          return aFav - bFav;
-        });
-        const grid = document.getElementById('grid');
-        sorted.forEach(c => grid.appendChild(c));
-      }
-
-      cards.forEach(card => {
-        const text  = card.dataset.text || '';
-        const cat   = card.dataset.cat  || '';
-        const tipo  = card.dataset.tipo || '';
-        const id    = card.dataset.id   || '';
-
-        let match = keywords.length === 0 || keywords.every(kw => text.includes(kw));
-
-        if (match && activeChip) {
-          if (activeChip === 'favs') {
-            match = favorites.includes(id);
-          } else if (activeChip.field === 'cat') {
-            match = cat === activeChip.value;
-          } else if (activeChip.field === 'tipo') {
-            match = tipo === activeChip.value;
-          }
-        }
-
-        card.style.display = match ? '' : 'none';
-        if (match) visible++;
-      });
-
-      updateCount(visible);
-      if (visible === 0) showState('empty');
-      else showState('grid');
-    }
-
-    function updateCount(visible) {
-      const total = allVideos.length;
-      const el    = document.getElementById('resultCount');
-      if (!searchQuery.trim() && !activeChip) {
-        el.innerHTML = `<span>${total}</span> videos en catálogo`;
-      } else {
-        el.innerHTML = `<span>${visible}</span> resultado${visible !== 1 ? 's' : ''} de ${total}`;
-      }
-    }
-
-    // ── VISTA LISTA / GRILLA ─────────────────────────────────────
-    function toggleView() {
-      listView = !listView;
-      localStorage.setItem('cat_listview', listView ? '1' : '0');
-      applyViewMode();
-    }
-    function applyViewMode() {
-      const grid = document.getElementById('grid');
-      const btn  = document.getElementById('viewBtn');
-      if (listView) {
-        grid.classList.add('list-view');
-        btn.classList.add('active');
-        btn.title = 'Vista grilla';
-        document.getElementById('viewIcon').innerHTML = `
-          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
-          <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2"/>
-          <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2"/>`;
-      } else {
-        grid.classList.remove('list-view');
-        btn.classList.remove('active');
-        btn.title = 'Vista lista';
-        document.getElementById('viewIcon').innerHTML = `
-          <rect x="3" y="3" width="7" height="7"/>
-          <rect x="14" y="3" width="7" height="7"/>
-          <rect x="3" y="14" width="7" height="7"/>
-          <rect x="14" y="14" width="7" height="7"/>`;
-      }
-    }
-
-    // ── ALTO CONTRASTE ───────────────────────────────────────────
-    function toggleContrast() {
-      highContrast = !highContrast;
-      document.body.classList.toggle('hc', highContrast);
-      document.getElementById('hcBtn').classList.toggle('active', highContrast);
-      localStorage.setItem('cat_hc', highContrast ? '1' : '0');
-    }
-
-    // ── BÚSQUEDA ─────────────────────────────────────────────────
-    const searchInput = document.getElementById('searchInput');
-    const clearBtn    = document.getElementById('clearBtn');
-    let debounceTimer;
-    searchInput.addEventListener('input', () => {
-      searchQuery = searchInput.value;
-      clearBtn.style.display = searchQuery ? 'block' : 'none';
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(applyFilter, 220);
+    // Favoritos primero
+    filtered.sort((a, b) => {
+      const af = favorites.includes(a.id);
+      const bf = favorites.includes(b.id);
+      return bf - af;
     });
-    function clearSearch() {
-      searchInput.value = ''; searchQuery = '';
-      clearBtn.style.display = 'none';
-      searchInput.focus(); applyFilter();
+
+    const countBar = document.getElementById('count-bar');
+    countBar.textContent = filtered.length === videos.length
+      ? `${videos.length} videos`
+      : `${filtered.length} de ${videos.length} videos`;
+
+    if (!filtered.length) {
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    filtered.forEach(v => grid.appendChild(buildCard(v)));
+  }
+
+  function buildCard(v) {
+    const isFav = favorites.includes(v.id);
+    const hasNoMeta = !v.cat && !v.type && !v.equip && !v.ind;
+    const metaStr = [v.cat, v.type].filter(Boolean).join(' · ') || (v.ind || '');
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    // Orange dot
+    if (hasNoMeta) {
+      const dot = document.createElement('div');
+      dot.className = 'dot-incomplete';
+      dot.title = 'Sin metadatos completados';
+      card.appendChild(dot);
     }
 
-    // ── UI STATE ─────────────────────────────────────────────────
-    function showState(state) {
-      document.getElementById('loadingState').style.display = state === 'loading' ? 'flex'  : 'none';
-      document.getElementById('errorState').style.display   = state === 'error'   ? 'flex'  : 'none';
-      document.getElementById('emptyState').style.display   = state === 'empty'   ? 'flex'  : 'none';
-      document.getElementById('grid').style.display         = state === 'grid'    ? 'grid'  : 'none';
+    // Thumbnail
+    const thumbWrap = document.createElement('div');
+    thumbWrap.className = 'thumb-wrap';
+
+    const skel = document.createElement('div');
+    skel.className = 'skeleton';
+
+    const img = document.createElement('img');
+    img.alt = v.name;
+    if (v.fileId) {
+      img.src = thumbUrl(v.fileId);
+      img.addEventListener('load', () => {
+        img.classList.add('loaded');
+        skel.classList.add('hidden');
+      });
+      img.addEventListener('error', () => {
+        skel.classList.add('hidden');
+        thumbWrap.style.background = 'var(--bg3)';
+      });
+    } else {
+      skel.classList.add('hidden');
     }
 
-    // ── HELPERS ──────────────────────────────────────────────────
-    function escHtml(str) {
-      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-    function escAttr(str) {
-      return String(str).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    }
+    const playOver = document.createElement('div');
+    playOver.className = 'play-overlay';
+    playOver.innerHTML = '<div class="play-icon">▶</div>';
 
-    // ── SERVICE WORKER ───────────────────────────────────────────
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-    }
+    thumbWrap.appendChild(skel);
+    thumbWrap.appendChild(img);
+    thumbWrap.appendChild(playOver);
 
-    // ── INIT ─────────────────────────────────────────────────────
-    if (sessionStorage.getItem('cat_auth') === '1') loadCatalog();
-  </script>
+    // Body
+    const body = document.createElement('div');
+    body.className = 'card-body';
+
+    const title = document.createElement('div');
+    title.className = 'card-title';
+    title.textContent = v.name;
+
+    const meta = document.createElement('div');
+    meta.className = 'card-meta';
+    meta.textContent = metaStr;
+
+    body.appendChild(title);
+    if (metaStr) body.appendChild(meta);
+
+    // Star
+    const star = document.createElement('button');
+    star.className = 'star-btn' + (isFav ? ' fav' : '');
+    star.textContent = isFav ? '★' : '☆';
+    star.title = isFav ? 'Quitar de favoritos' : 'Agregar a favoritos';
+    star.addEventListener('click', e => {
+      e.stopPropagation();
+      toggleFav(v.id, star);
+    });
+
+    card.appendChild(thumbWrap);
+    card.appendChild(body);
+    card.appendChild(star);
+
+    card.addEventListener('click', () => openModal(v));
+
+    return card;
+  }
+
+  // ── FAVORITES ──
+  function toggleFav(id, btn) {
+    const idx = favorites.indexOf(id);
+    if (idx === -1) {
+      favorites.push(id);
+      btn.textContent = '★';
+      btn.classList.add('fav');
+      btn.title = 'Quitar de favoritos';
+    } else {
+      favorites.splice(idx, 1);
+      btn.textContent = '☆';
+      btn.classList.remove('fav');
+      btn.title = 'Agregar a favoritos';
+    }
+    localStorage.setItem('hc_favs', JSON.stringify(favorites));
+    buildChips();
+  }
+
+  // ── MODAL ──
+  function openModal(v) {
+    document.getElementById('modal-title').textContent = v.name;
+
+    const metaEl = document.getElementById('modal-meta');
+    metaEl.innerHTML = '';
+    [v.cat, v.type, v.equip, v.ind].filter(Boolean).forEach(m => {
+      const tag = document.createElement('span');
+      tag.className = 'meta-tag';
+      tag.textContent = m;
+      metaEl.appendChild(tag);
+    });
+
+    document.getElementById('modal-iframe').src = v.link;
+    document.getElementById('modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    document.getElementById('modal-iframe').src = '';
+    document.body.style.overflow = '';
+  }
+
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal')) closeModal();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+  // ── SEARCH ──
+  let searchTimer;
+  document.getElementById('search').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(renderCards, 220);
+  });
+
+  // ── VIEW TOGGLE ──
+  document.getElementById('btn-view').addEventListener('click', () => {
+    listMode = !listMode;
+    localStorage.setItem('hc_view', listMode ? 'list' : 'grid');
+    applyPrefs();
+    renderCards();
+  });
+
+  // ── HIGH CONTRAST ──
+  document.getElementById('btn-hc').addEventListener('click', () => {
+    highContrast = !highContrast;
+    localStorage.setItem('hc_hc', highContrast ? '1' : '0');
+    applyPrefs();
+  });
+
+  // ── FAB scroll to top ──
+  const fab = document.getElementById('fab');
+  window.addEventListener('scroll', () => {
+    fab.classList.toggle('show', window.scrollY > 300);
+  });
+  fab.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  // ── SERVICE WORKER ──
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+</script>
 </body>
 </html>
