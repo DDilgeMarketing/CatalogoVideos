@@ -16,7 +16,115 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
   <style>
-    /* ── RESET & BASE ─────────────────────────────────── */
+    /* ── PANTALLA PIN ────────────────────────────────────── */
+    #pinScreen {
+      position: fixed;
+      inset: 0;
+      background: #0d2137;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      gap: 24px;
+      padding: 32px 24px;
+    }
+
+    #pinScreen.hidden { display: none; }
+
+    .pin-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pin-logo svg { opacity: 0.9; }
+
+    .pin-logo h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.02em;
+      text-align: center;
+    }
+
+    .pin-logo p {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      text-align: center;
+    }
+
+    .pin-box {
+      background: #1a3a5c;
+      border-radius: 14px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .pin-label {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+
+    #pinInput {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.07);
+      color: #ffffff;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-text-security: disc;
+    }
+
+    #pinInput:focus { border-color: #3b82f6; }
+    #pinInput.error { border-color: #ef4444; animation: shake 0.3s ease; }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-8px); }
+      75%      { transform: translateX(8px); }
+    }
+
+    #pinBtn {
+      width: 100%;
+      padding: 14px;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+      letter-spacing: 0.03em;
+    }
+
+    #pinBtn:hover  { background: #1d4ed8; }
+    #pinBtn:active { background: #1e40af; }
+
+    .pin-error {
+      font-size: 0.8rem;
+      color: #f87171;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    /* ── RESET & BASE ────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -375,6 +483,33 @@
 </head>
 <body>
 
+  <!-- ── PANTALLA DE PIN ───────────────────────────────────── -->
+  <div id="pinScreen">
+    <div class="pin-logo">
+      <svg width="56" height="56" viewBox="0 0 36 36" fill="none">
+        <rect width="36" height="36" rx="8" fill="#1a3a5c"/>
+        <path d="M10 12h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+        <path d="M15.5 15.5l6 2.5-6 2.5v-5z" fill="#2563eb"/>
+      </svg>
+      <h2>Catálogo de Videos</h2>
+      <p>Acceso restringido</p>
+    </div>
+    <div class="pin-box">
+      <p class="pin-label">Ingrese el código de acceso</p>
+      <input
+        id="pinInput"
+        type="password"
+        inputmode="numeric"
+        maxlength="12"
+        placeholder="••••"
+        autocomplete="off"
+        onkeydown="if(event.key==='Enter') checkPin()"
+      />
+      <p class="pin-error" id="pinError"></p>
+      <button id="pinBtn" onclick="checkPin()">Ingresar</button>
+    </div>
+  </div>
+
   <!-- ── HEADER ────────────────────────────────────────────── -->
   <header>
     <div class="header-top">
@@ -451,6 +586,37 @@
     // ── CONFIGURACIÓN ───────────────────────────────────────────
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWbuOhAfDBTsyJKONMNcf9Lw3F6aaT1-Ovrif_ixyclRT1HeNNKdg415q4NZ74XchXvyUstM2Xfqyh/pub?gid=1463725900&single=true&output=csv';
 
+    // ── SEGURIDAD ──────────────────────────────────────────────
+    const ACCESS_PIN  = 'Hitec2025';          // PIN de acceso a la app
+    const PROXY_TOKEN = 'Hv9kP3mX7qZ';       // Token del proxy de miniaturas
+
+    // ── VERIFICACIÓN DE PIN ────────────────────────────────────
+    function checkPin() {
+      const input = document.getElementById('pinInput');
+      const error = document.getElementById('pinError');
+      if (input.value === ACCESS_PIN) {
+        sessionStorage.setItem('cat_auth', '1');
+        document.getElementById('pinScreen').classList.add('hidden');
+        loadCatalog();
+      } else {
+        error.textContent = 'Código incorrecto. Intente nuevamente.';
+        input.classList.add('error');
+        input.value = '';
+        setTimeout(() => input.classList.remove('error'), 400);
+        input.focus();
+      }
+    }
+
+    // Si ya autenticó en esta sesión, saltar el PIN
+    if (sessionStorage.getItem('cat_auth') === '1') {
+      document.getElementById('pinScreen').classList.add('hidden');
+      document.addEventListener('DOMContentLoaded', loadCatalog);
+    } else {
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('pinInput').focus();
+      });
+    }
+
     // ── ESTADO ─────────────────────────────────────────────────
     let allVideos   = [];
     let searchQuery = '';
@@ -461,7 +627,7 @@
       return match ? match[1] : null;
     }
 
-    const PROXY = 'https://script.google.com/macros/s/AKfycbws-zMsVxOEakduniyZY5s-psq7v9w3ziuJ-LfDlw2sF6sVGiUOsUdwSfRjeUzu-BaehQ/exec';
+    const PROXY = 'https://script.google.com/macros/s/AKfycbz6Mzjzueo0vdzQVyi670FTpxDvSmgXD39MVD4D0O2Wz64yHrLP-z_-hbQbJ1M0fSXTtw/exec';
 
     // Cache en memoria para no pedir la misma miniatura dos veces
     const thumbCache = {};
@@ -476,7 +642,7 @@
         return;
       }
 
-      fetch(`${PROXY}?id=${id}`)
+      fetch(`${PROXY}?id=${id}&token=${PROXY_TOKEN}`)
         .then(r => r.json())
         .then(data => {
           if (data.src) {
