@@ -11,137 +11,43 @@
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <title>Catálogo de Videos</title>
-
-  <!-- PapaParse para parseo robusto de CSV -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
   <style>
-    /* ── PANTALLA PIN ────────────────────────────────────── */
-    #pinScreen {
-      position: fixed;
-      inset: 0;
-      background: #0d2137;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      gap: 24px;
-      padding: 32px 24px;
-    }
-
-    #pinScreen.hidden { display: none; }
-
-    .pin-logo {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .pin-logo svg { opacity: 0.9; }
-
-    .pin-logo h2 {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #ffffff;
-      letter-spacing: 0.02em;
-      text-align: center;
-    }
-
-    .pin-logo p {
-      font-size: 0.75rem;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      text-align: center;
-    }
-
-    .pin-box {
-      background: #1a3a5c;
-      border-radius: 14px;
-      padding: 28px 24px;
-      width: 100%;
-      max-width: 320px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .pin-label {
-      font-size: 0.8rem;
-      color: #94a3b8;
-      text-align: center;
-      letter-spacing: 0.04em;
-    }
-
-    #pinInput {
-      width: 100%;
-      padding: 14px;
-      border: 2px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
-      background: rgba(255,255,255,0.07);
-      color: #ffffff;
-      font-size: 1.3rem;
-      font-weight: 700;
-      letter-spacing: 0.3em;
-      text-align: center;
-      outline: none;
-      transition: border-color 0.2s;
-      -webkit-text-security: disc;
-    }
-
-    #pinInput:focus { border-color: #3b82f6; }
-    #pinInput.error { border-color: #ef4444; animation: shake 0.3s ease; }
-
-    @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      25%      { transform: translateX(-8px); }
-      75%      { transform: translateX(8px); }
-    }
-
-    #pinBtn {
-      width: 100%;
-      padding: 14px;
-      background: #2563eb;
-      color: #ffffff;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s;
-      letter-spacing: 0.03em;
-    }
-
-    #pinBtn:hover  { background: #1d4ed8; }
-    #pinBtn:active { background: #1e40af; }
-
-    .pin-error {
-      font-size: 0.8rem;
-      color: #f87171;
-      text-align: center;
-      min-height: 18px;
-    }
-
-    /* ── RESET & BASE ────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --navy-deep:   #0d2137;
-      --navy:        #1a3a5c;
-      --navy-mid:    #1e4976;
-      --blue:        #2563eb;
-      --blue-light:  #3b82f6;
-      --gray-100:    #f1f5f9;
-      --gray-200:    #e2e8f0;
-      --gray-400:    #94a3b8;
-      --gray-600:    #475569;
-      --white:       #ffffff;
-      --card-radius: 10px;
-      --shadow:      0 2px 8px rgba(0,0,0,0.18);
-      --shadow-hover:0 6px 20px rgba(0,0,0,0.28);
+      --navy-deep:    #0d2137;
+      --navy:         #1a3a5c;
+      --navy-mid:     #1e4976;
+      --blue:         #2563eb;
+      --blue-light:   #3b82f6;
+      --gray-100:     #f1f5f9;
+      --gray-200:     #e2e8f0;
+      --gray-400:     #94a3b8;
+      --gray-600:     #475569;
+      --white:        #ffffff;
+      --card-radius:  10px;
+      --shadow:       0 2px 8px rgba(0,0,0,0.18);
+      --shadow-hover: 0 6px 20px rgba(0,0,0,0.28);
+      --fav-color:    #f59e0b;
+      --warn-color:   #f97316;
     }
+
+    /* ── ALTO CONTRASTE ──────────────────────────────────────── */
+    body.hc {
+      --navy-deep:  #000000;
+      --navy:       #001428;
+      --navy-mid:   #002040;
+      --gray-100:   #e0e8f0;
+      --gray-200:   #c0cfe0;
+      --gray-400:   #7090b0;
+      --gray-600:   #304060;
+      --white:      #ffffff;
+      --shadow:     0 2px 8px rgba(0,0,0,0.5);
+    }
+    body.hc .card-name    { font-size: 0.92rem; font-weight: 700; }
+    body.hc #searchInput  { font-size: 1.05rem; }
+    body.hc .chip         { font-size: 0.82rem; padding: 6px 14px; }
 
     html, body {
       height: 100%;
@@ -151,339 +57,289 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── HEADER ─────────────────────────────────────────── */
+    /* ── PIN SCREEN ──────────────────────────────────────────── */
+    #pinScreen {
+      position: fixed; inset: 0;
+      background: #0d2137;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 9999; gap: 24px; padding: 32px 24px;
+    }
+    #pinScreen.hidden { display: none; }
+    .pin-logo { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .pin-logo h2 { font-size: 1.2rem; font-weight: 700; color: #fff; text-align: center; }
+    .pin-logo p  { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; }
+    .pin-box {
+      background: #1a3a5c; border-radius: 14px;
+      padding: 28px 24px; width: 100%; max-width: 320px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .pin-label { font-size: 0.8rem; color: #94a3b8; text-align: center; letter-spacing: 0.04em; }
+    #pinInput {
+      width: 100%; padding: 14px; border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 8px; background: rgba(255,255,255,0.07); color: #fff;
+      font-size: 1.3rem; font-weight: 700; letter-spacing: 0.3em;
+      text-align: center; outline: none; transition: border-color 0.2s;
+      -webkit-text-security: disc;
+    }
+    #pinInput:focus { border-color: #3b82f6; }
+    #pinInput.error { border-color: #ef4444; animation: shake 0.3s ease; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-8px); }
+      75%      { transform: translateX(8px); }
+    }
+    #pinBtn {
+      width: 100%; padding: 14px; background: #2563eb; color: #fff;
+      border: none; border-radius: 8px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: background 0.2s;
+    }
+    #pinBtn:hover { background: #1d4ed8; }
+    .pin-error { font-size: 0.8rem; color: #f87171; text-align: center; min-height: 18px; }
+
+    /* ── HEADER ──────────────────────────────────────────────── */
     header {
-      background: var(--navy-deep);
-      color: var(--white);
-      padding: 16px 20px 14px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      background: var(--navy-deep); color: var(--white);
+      padding: 12px 16px 10px;
+      position: sticky; top: 0; z-index: 100;
       box-shadow: 0 2px 12px rgba(0,0,0,0.4);
     }
-
     .header-top {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
     }
+    .header-icon { width: 32px; height: 32px; flex-shrink: 0; }
+    .header-title { flex: 1; }
+    .header-title h1 { font-size: 1.05rem; font-weight: 700; line-height: 1.2; }
+    .header-title p  { font-size: 0.68rem; color: var(--gray-400); margin-top: 1px; text-transform: uppercase; letter-spacing: 0.03em; }
 
-    .header-icon {
-      width: 36px;
-      height: 36px;
-      flex-shrink: 0;
+    .header-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .icon-btn {
+      width: 34px; height: 34px; border: none; border-radius: 8px;
+      background: rgba(255,255,255,0.08); color: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background 0.2s; flex-shrink: 0;
+      font-size: 0.85rem;
     }
+    .icon-btn:hover   { background: rgba(255,255,255,0.16); }
+    .icon-btn.active  { background: var(--blue); }
 
-    .header-title {
-      flex: 1;
-    }
-
-    .header-title h1 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      line-height: 1.2;
-    }
-
-    .header-title p {
-      font-size: 0.72rem;
-      color: var(--gray-400);
-      margin-top: 2px;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-    }
-
-    /* ── BUSCADOR ────────────────────────────────────────── */
-    .search-bar {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .search-wrap {
-      flex: 1;
-      position: relative;
-    }
-
+    .search-bar { display: flex; gap: 8px; align-items: center; }
+    .search-wrap { flex: 1; position: relative; }
     .search-icon {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--gray-400);
-      pointer-events: none;
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      color: var(--gray-400); pointer-events: none;
     }
-
     #searchInput {
-      width: 100%;
-      padding: 11px 14px 11px 40px;
-      border: 2px solid transparent;
-      border-radius: 8px;
-      background: rgba(255,255,255,0.1);
-      color: var(--white);
-      font-size: 0.95rem;
-      outline: none;
+      width: 100%; padding: 10px 12px 10px 36px;
+      border: 2px solid transparent; border-radius: 8px;
+      background: rgba(255,255,255,0.1); color: var(--white);
+      font-size: 0.95rem; outline: none;
       transition: background 0.2s, border-color 0.2s;
     }
-
-    #searchInput::placeholder { color: rgba(255,255,255,0.45); }
-
-    #searchInput:focus {
-      background: rgba(255,255,255,0.15);
-      border-color: var(--blue-light);
-    }
-
+    #searchInput::placeholder { color: rgba(255,255,255,0.4); }
+    #searchInput:focus { background: rgba(255,255,255,0.15); border-color: var(--blue-light); }
     #clearBtn {
-      display: none;
-      padding: 11px 14px;
-      background: var(--navy-mid);
-      color: var(--white);
-      border: none;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
+      display: none; padding: 10px 12px;
+      background: var(--navy-mid); color: var(--white);
+      border: none; border-radius: 8px; font-size: 0.82rem;
+      font-weight: 600; cursor: pointer; white-space: nowrap;
       transition: background 0.2s;
     }
-
     #clearBtn:hover { background: var(--blue); }
 
-    /* ── BARRA DE ESTADO ─────────────────────────────────── */
+    /* ── BARRA DE ESTADO ─────────────────────────────────────── */
     #statusBar {
-      background: var(--navy);
-      padding: 7px 20px;
-      font-size: 0.78rem;
-      color: var(--gray-400);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      letter-spacing: 0.02em;
+      background: var(--navy); padding: 6px 16px;
+      font-size: 0.75rem; color: var(--gray-400);
+      display: flex; justify-content: space-between; align-items: center;
     }
-
     #statusBar span { color: var(--white); font-weight: 600; }
 
-    /* ── GRILLA DE CARDS ─────────────────────────────────── */
+    /* ── FILTER CHIPS ────────────────────────────────────────── */
+    #filtersRow {
+      background: var(--navy); padding: 0 16px 10px;
+      display: flex; gap: 6px; overflow-x: auto;
+      scrollbar-width: none;
+    }
+    #filtersRow::-webkit-scrollbar { display: none; }
+
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 12px; border-radius: 20px; font-size: 0.75rem;
+      font-weight: 600; white-space: nowrap; cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,0.15);
+      background: transparent; color: var(--gray-400);
+      transition: all 0.18s; flex-shrink: 0;
+    }
+    .chip:hover  { border-color: var(--blue-light); color: var(--white); }
+    .chip.active { background: var(--blue); border-color: var(--blue); color: var(--white); }
+    .chip.fav-chip.active { background: var(--fav-color); border-color: var(--fav-color); color: #000; }
+
+    .chip-divider {
+      width: 1px; background: rgba(255,255,255,0.1);
+      flex-shrink: 0; margin: 4px 2px;
+    }
+
+    /* ── GRILLA ──────────────────────────────────────────────── */
     #grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      padding: 16px;
-      max-width: 1100px;
-      margin: 0 auto;
+      gap: 12px; padding: 14px;
+      max-width: 1100px; margin: 0 auto;
     }
-
     @media (min-width: 600px) {
-      #grid { grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 20px; }
+      #grid { grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 18px; }
     }
-
     @media (min-width: 900px) {
       #grid { grid-template-columns: repeat(4, 1fr); }
     }
 
-    /* ── CARD ────────────────────────────────────────────── */
+    /* ── VISTA LISTA ─────────────────────────────────────────── */
+    #grid.list-view {
+      grid-template-columns: 1fr !important;
+      gap: 8px; padding: 12px;
+    }
+    #grid.list-view .card {
+      display: flex; flex-direction: row; align-items: center;
+    }
+    #grid.list-view .card-thumb {
+      width: 110px; min-width: 110px;
+      aspect-ratio: unset; height: 65px;
+    }
+    #grid.list-view .card-info {
+      flex: 1; padding: 8px 12px;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    #grid.list-view .card-name {
+      -webkit-line-clamp: 1; font-size: 0.85rem;
+    }
+    #grid.list-view .fav-btn {
+      top: 50%; transform: translateY(-50%); left: auto; right: 8px;
+    }
+
+    /* ── CARD ────────────────────────────────────────────────── */
     .card {
-      background: var(--white);
-      border-radius: var(--card-radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-      display: block;
+      background: var(--white); border-radius: var(--card-radius);
+      box-shadow: var(--shadow); overflow: hidden; cursor: pointer;
+      text-decoration: none; color: inherit; display: block;
+      position: relative;
       transition: transform 0.18s ease, box-shadow 0.18s ease;
       -webkit-tap-highlight-color: transparent;
     }
+    .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+    .card:active { transform: translateY(0); box-shadow: var(--shadow); }
 
-    .card:hover, .card:focus {
-      transform: translateY(-3px);
-      box-shadow: var(--shadow-hover);
-      outline: none;
-    }
-
-    .card:active {
-      transform: translateY(0px);
-      box-shadow: var(--shadow);
-    }
-
-    .card-thumb {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: var(--navy-deep);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card-thumb img {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      opacity: 0;
-      transition: opacity 0.4s ease;
-    }
-
-    .card-thumb img.loaded { opacity: 1; }
-
-    /* Placeholder — siempre visible detrás de la imagen */
-    .thumb-placeholder {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, var(--navy-deep) 0%, var(--navy-mid) 100%);
-      color: rgba(255,255,255,0.5);
-      font-size: 0.7rem;
-      gap: 8px;
-      text-align: center;
-      padding: 8px;
-      z-index: 0;
-    }
-
-    .card-thumb img { z-index: 1; }
-
-    .play-icon {
-      width: 36px;
-      height: 36px;
-      background: rgba(255,255,255,0.15);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Overlay al hacer hover */
-    .card-thumb::after {
+    /* Indicador de metadatos incompletos */
+    .card.incomplete::before {
       content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(37, 99, 235, 0.0);
-      transition: background 0.2s;
+      position: absolute; top: 6px; right: 6px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--warn-color); z-index: 10;
+      box-shadow: 0 0 0 2px rgba(0,0,0,0.3);
     }
 
-    .card:hover .card-thumb::after {
-      background: rgba(37, 99, 235, 0.15);
+    /* ── THUMBNAIL ───────────────────────────────────────────── */
+    .card-thumb {
+      width: 100%; aspect-ratio: 16/9;
+      background: var(--navy-deep); position: relative; overflow: hidden;
     }
-
-    .card-info {
-      padding: 10px 12px 12px;
+    /* Skeleton loader */
+    .thumb-skeleton {
+      position: absolute; inset: 0; z-index: 1;
+      background: linear-gradient(90deg, #1a3a5c 25%, #244f7a 50%, #1a3a5c 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s infinite;
     }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .thumb-skeleton.done { display: none; }
 
+    /* Play icon placeholder (debajo del skeleton) */
+    .thumb-placeholder {
+      position: absolute; inset: 0; z-index: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--navy-deep) 0%, var(--navy-mid) 100%);
+    }
+    .play-icon {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .card-thumb img {
+      position: absolute; inset: 0; z-index: 2;
+      width: 100%; height: 100%; object-fit: cover;
+      opacity: 0; transition: opacity 0.4s ease;
+    }
+    .card-thumb img.loaded { opacity: 1; }
+    .card-thumb::after {
+      content: ''; position: absolute; inset: 0; z-index: 3;
+      background: rgba(37,99,235,0); transition: background 0.2s;
+    }
+    .card:hover .card-thumb::after { background: rgba(37,99,235,0.12); }
+
+    /* ── FAVORITO BTN ────────────────────────────────────────── */
+    .fav-btn {
+      position: absolute; top: 6px; left: 6px; z-index: 10;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(0,0,0,0.45); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; line-height: 1;
+      transition: background 0.2s, transform 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .fav-btn:hover    { background: rgba(0,0,0,0.65); transform: scale(1.15); }
+    .fav-btn.active   { background: rgba(245,158,11,0.85); }
+
+    /* ── CARD INFO ───────────────────────────────────────────── */
+    .card-info { padding: 9px 11px 11px; }
     .card-name {
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--navy-deep);
+      font-size: 0.81rem; font-weight: 600; color: var(--navy-deep);
       line-height: 1.3;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
       overflow: hidden;
     }
-
     .card-meta {
-      margin-top: 5px;
-      font-size: 0.70rem;
-      color: var(--gray-600);
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
+      margin-top: 4px; font-size: 0.69rem; color: var(--gray-600);
+      display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
       overflow: hidden;
     }
-
     .card-tag {
-      display: inline-block;
-      margin-top: 6px;
-      padding: 2px 7px;
-      background: var(--gray-100);
-      border-radius: 4px;
-      font-size: 0.65rem;
-      font-weight: 600;
-      color: var(--navy);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      display: inline-block; margin-top: 5px; padding: 2px 6px;
+      background: var(--gray-100); border-radius: 4px;
+      font-size: 0.63rem; font-weight: 600; color: var(--navy);
+      text-transform: uppercase; letter-spacing: 0.04em;
     }
 
-    /* ── ESTADOS ESPECIALES ──────────────────────────────── */
+    /* ── ESTADOS ─────────────────────────────────────────────── */
     #emptyState, #loadingState, #errorState {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 60px 20px;
-      text-align: center;
-      color: var(--gray-600);
-      gap: 12px;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 60px 20px; text-align: center; color: var(--gray-600); gap: 12px;
     }
-
-    #emptyState svg, #loadingState svg, #errorState svg {
-      opacity: 0.35;
-    }
-
-    #emptyState p, #loadingState p, #errorState p {
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-
+    #emptyState svg, #loadingState svg, #errorState svg { opacity: 0.35; }
+    #emptyState p, #loadingState p, #errorState p { font-size: 0.9rem; line-height: 1.5; }
     #emptyState strong, #errorState strong {
-      font-size: 1rem;
-      color: var(--navy);
-      display: block;
-      margin-bottom: 4px;
+      font-size: 1rem; color: var(--navy); display: block; margin-bottom: 4px;
     }
-
     .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--gray-200);
-      border-top-color: var(--blue);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      width: 40px; height: 40px;
+      border: 3px solid var(--gray-200); border-top-color: var(--blue);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── FOOTER ──────────────────────────────────────────── */
+    /* ── FOOTER ──────────────────────────────────────────────── */
     footer {
-      text-align: center;
-      padding: 16px;
-      font-size: 0.72rem;
-      color: var(--gray-400);
-      border-top: 1px solid var(--gray-200);
-      margin-top: 8px;
+      text-align: center; padding: 14px; font-size: 0.7rem;
+      color: var(--gray-400); border-top: 1px solid var(--gray-200); margin-top: 6px;
     }
-
-    /* ── FILTROS ACTIVOS (chips) ─────────────────────────── */
-    #activeFilters {
-      display: none;
-      padding: 8px 16px 0;
-      gap: 6px;
-      flex-wrap: wrap;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .filter-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 4px 10px;
-      background: var(--navy);
-      color: var(--white);
-      border-radius: 20px;
-      font-size: 0.72rem;
-      font-weight: 600;
-    }
-
   </style>
 </head>
 <body>
 
-  <!-- ── PANTALLA DE PIN ───────────────────────────────────── -->
+  <!-- ── PIN SCREEN ────────────────────────────────────────────── -->
   <div id="pinScreen">
     <div class="pin-logo">
       <svg width="56" height="56" viewBox="0 0 36 36" fill="none">
@@ -496,101 +352,103 @@
     </div>
     <div class="pin-box">
       <p class="pin-label">Ingrese el código de acceso</p>
-      <input
-        id="pinInput"
-        type="password"
-        inputmode="numeric"
-        maxlength="12"
-        placeholder="••••"
-        autocomplete="off"
-        onkeydown="if(event.key==='Enter') checkPin()"
-      />
+      <input id="pinInput" type="password" inputmode="numeric" maxlength="12"
+             placeholder="••••" autocomplete="off"
+             onkeydown="if(event.key==='Enter') checkPin()" />
       <p class="pin-error" id="pinError"></p>
       <button id="pinBtn" onclick="checkPin()">Ingresar</button>
     </div>
   </div>
 
-  <!-- ── HEADER ────────────────────────────────────────────── -->
+  <!-- ── HEADER ────────────────────────────────────────────────── -->
   <header>
     <div class="header-top">
-      <svg class="header-icon" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg class="header-icon" viewBox="0 0 36 36" fill="none">
         <rect width="36" height="36" rx="8" fill="#1a3a5c"/>
         <path d="M10 12h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
         <path d="M15.5 15.5l6 2.5-6 2.5v-5z" fill="#2563eb"/>
       </svg>
       <div class="header-title">
         <h1>Catálogo de Videos</h1>
-        <p>Soluciones de Medición, Control y Calibración</p>
+        <p>Medición · Control · Calibración</p>
+      </div>
+      <div class="header-actions">
+        <!-- Vista lista/grilla -->
+        <button class="icon-btn" id="viewBtn" onclick="toggleView()" title="Cambiar vista">
+          <svg id="viewIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+        </button>
+        <!-- Alto contraste -->
+        <button class="icon-btn" id="hcBtn" onclick="toggleContrast()" title="Alto contraste">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 3v18" stroke-width="2"/>
+            <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
       </div>
     </div>
-
     <div class="search-bar">
       <div class="search-wrap">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
-        <input
-          id="searchInput"
-          type="search"
-          inputmode="search"
-          autocomplete="off"
-          autocorrect="off"
-          spellcheck="false"
-          placeholder="Buscar por nombre, equipo, industria..."
-          aria-label="Buscar videos"
-        />
+        <input id="searchInput" type="search" inputmode="search"
+               autocomplete="off" autocorrect="off" spellcheck="false"
+               placeholder="Buscar por nombre, equipo, industria..."
+               aria-label="Buscar videos" />
       </div>
-      <button id="clearBtn" onclick="clearSearch()" aria-label="Limpiar búsqueda">✕ Limpiar</button>
+      <button id="clearBtn" onclick="clearSearch()">✕ Limpiar</button>
     </div>
   </header>
 
-  <!-- ── BARRA DE ESTADO ───────────────────────────────────── -->
+  <!-- ── STATUS BAR ────────────────────────────────────────────── -->
   <div id="statusBar">
     <div id="resultCount">Cargando catálogo...</div>
     <div id="lastUpdate"></div>
   </div>
 
-  <!-- ── FILTROS ACTIVOS ───────────────────────────────────── -->
-  <div id="activeFilters"></div>
+  <!-- ── FILTER CHIPS ──────────────────────────────────────────── -->
+  <div id="filtersRow"></div>
 
-  <!-- ── LOADING ───────────────────────────────────────────── -->
+  <!-- ── LOADING ───────────────────────────────────────────────── -->
   <div id="loadingState" style="display:flex;">
     <div class="spinner"></div>
     <p>Cargando catálogo de videos...</p>
   </div>
 
-  <!-- ── ERROR ─────────────────────────────────────────────── -->
+  <!-- ── ERROR ─────────────────────────────────────────────────── -->
   <div id="errorState">
     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5">
       <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
     </svg>
-    <p><strong>No se pudo cargar el catálogo</strong>Verifique su conexión a internet e intente nuevamente.</p>
+    <p><strong>No se pudo cargar el catálogo</strong>Verifique su conexión e intente nuevamente.</p>
     <button onclick="loadCatalog()" style="margin-top:8px;padding:10px 20px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:0.9rem;cursor:pointer;font-weight:600;">Reintentar</button>
   </div>
 
-  <!-- ── GRILLA ─────────────────────────────────────────────── -->
+  <!-- ── GRILLA ─────────────────────────────────────────────────── -->
   <div id="grid"></div>
 
-  <!-- ── SIN RESULTADOS ────────────────────────────────────── -->
+  <!-- ── VACÍO ─────────────────────────────────────────────────── -->
   <div id="emptyState">
     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5">
       <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M8 11h6"/>
     </svg>
-    <p><strong>Sin resultados</strong>Ningún video coincide con "<span id="emptyQuery"></span>"</p>
+    <p><strong>Sin resultados</strong>Ningún video coincide con la búsqueda actual.</p>
   </div>
 
-  <!-- ── FOOTER ─────────────────────────────────────────────── -->
   <footer>Catálogo de Videos · Actualización automática vía Google Drive</footer>
 
   <script>
-    // ── CONFIGURACIÓN ───────────────────────────────────────────
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWbuOhAfDBTsyJKONMNcf9Lw3F6aaT1-Ovrif_ixyclRT1HeNNKdg415q4NZ74XchXvyUstM2Xfqyh/pub?gid=1463725900&single=true&output=csv';
+    // ── CONFIGURACIÓN ────────────────────────────────────────────
+    const CSV_URL     = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWbuOhAfDBTsyJKONMNcf9Lw3F6aaT1-Ovrif_ixyclRT1HeNNKdg415q4NZ74XchXvyUstM2Xfqyh/pub?gid=1463725900&single=true&output=csv';
+    const ACCESS_PIN  = 'Hitec2025';
+    const PROXY_TOKEN = 'Hv9kP3mX7qZ';
+    const PROXY       = 'https://script.google.com/macros/s/AKfycbz6Mzjzueo0vdzQVyi670FTpxDvSmgXD39MVD4D0O2Wz64yHrLP-z_-hbQbJ1M0fSXTtw/exec';
 
-    // ── SEGURIDAD ──────────────────────────────────────────────
-    const ACCESS_PIN  = 'Hitec2025';          // PIN de acceso a la app
-    const PROXY_TOKEN = 'Hv9kP3mX7qZ';       // Token del proxy de miniaturas
-
-    // ── VERIFICACIÓN DE PIN ────────────────────────────────────
+    // ── PIN ──────────────────────────────────────────────────────
     function checkPin() {
       const input = document.getElementById('pinInput');
       const error = document.getElementById('pinError');
@@ -607,41 +465,42 @@
       }
     }
 
-    // Si ya autenticó en esta sesión, saltar el PIN
     if (sessionStorage.getItem('cat_auth') === '1') {
       document.getElementById('pinScreen').classList.add('hidden');
-      document.addEventListener('DOMContentLoaded', loadCatalog);
     } else {
-      document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('pinInput').focus();
-      });
+      document.addEventListener('DOMContentLoaded', () =>
+        document.getElementById('pinInput').focus()
+      );
     }
 
-    // ── ESTADO ─────────────────────────────────────────────────
-    let allVideos   = [];
-    let searchQuery = '';
-
-    // ── EXTRACCIÓN DE ID DE DRIVE ───────────────────────────────
-    function extractDriveId(link) {
-      const match = String(link || '').match(/\/d\/([a-zA-Z0-9_-]+)/);
-      return match ? match[1] : null;
-    }
-
-    const PROXY = 'https://script.google.com/macros/s/AKfycbz6Mzjzueo0vdzQVyi670FTpxDvSmgXD39MVD4D0O2Wz64yHrLP-z_-hbQbJ1M0fSXTtw/exec';
-
-    // Cache en memoria para no pedir la misma miniatura dos veces
+    // ── ESTADO ───────────────────────────────────────────────────
+    let allVideos    = [];
+    let searchQuery  = '';
+    let activeChip   = null;   // { field: 'categoria'|'tipo', value: string } | 'favs'
+    let listView     = localStorage.getItem('cat_listview') === '1';
+    let highContrast = localStorage.getItem('cat_hc') === '1';
+    let favorites    = JSON.parse(localStorage.getItem('cat_favs') || '[]');
     const thumbCache = {};
 
+    // Aplicar preferencias guardadas
+    if (highContrast) document.body.classList.add('hc');
+
+    // ── DRIVE HELPERS ────────────────────────────────────────────
+    function extractDriveId(link) {
+      const m = String(link || '').match(/\/d\/([a-zA-Z0-9_-]+)/);
+      return m ? m[1] : null;
+    }
+    function videoUrl(id) { return `https://drive.google.com/file/d/${id}/view`; }
+
+    // ── THUMBNAIL VÍA PROXY ──────────────────────────────────────
     function loadThumb(img, id) {
       if (!id) return;
-
-      // Si ya está en caché, aplicar directo
       if (thumbCache[id]) {
         img.src = thumbCache[id];
         img.classList.add('loaded');
+        img.closest('.card-thumb').querySelector('.thumb-skeleton')?.classList.add('done');
         return;
       }
-
       fetch(`${PROXY}?id=${id}&token=${PROXY_TOKEN}`)
         .then(r => r.json())
         .then(data => {
@@ -649,83 +508,115 @@
             thumbCache[id] = data.src;
             img.src = data.src;
             img.classList.add('loaded');
+            img.closest('.card-thumb').querySelector('.thumb-skeleton')?.classList.add('done');
+          } else {
+            img.closest('.card-thumb').querySelector('.thumb-skeleton')?.classList.add('done');
           }
         })
-        .catch(() => {}); // Mantener placeholder si falla
+        .catch(() => {
+          img.closest('.card-thumb')?.querySelector('.thumb-skeleton')?.classList.add('done');
+        });
     }
 
-    function videoUrl(id) {
-      return `https://drive.google.com/file/d/${id}/view`;
-    }
-
-    // ── CARGA DEL CSV ───────────────────────────────────────────
+    // ── CARGA CSV ────────────────────────────────────────────────
     function loadCatalog() {
       showState('loading');
-
       Papa.parse(CSV_URL, {
-        download: true,
-        header: false,
-        skipEmptyLines: true,
-        complete: function(results) {
-          const rows = results.data;
-
-          // Saltar fila de encabezado
-          const dataRows = rows.slice(1);
-
-          allVideos = dataRows
+        download: true, header: false, skipEmptyLines: true,
+        complete(results) {
+          allVideos = results.data.slice(1)
             .map(row => ({
               nombre:    (row[0] || '').trim(),
               categoria: (row[1] || '').trim(),
               tipo:      (row[2] || '').trim(),
               equipos:   (row[3] || '').trim(),
               industria: (row[4] || '').trim(),
-              link:      (row[5] || '').trim(),
               id:        extractDriveId(row[5] || ''),
             }))
-            .filter(v => v.nombre && v.id); // Solo filas válidas
+            .filter(v => v.nombre && v.id);
 
-          // Ordenar alfabéticamente
           allVideos.sort((a, b) =>
             a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })
           );
 
-          // Actualizar timestamp
           document.getElementById('lastUpdate').textContent =
             'Actualizado: ' + new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
 
+          buildChips();
           renderAllCards();
           applyFilter();
+          applyViewMode();
           showState('grid');
         },
-        error: function(err) {
-          console.error('Error al cargar CSV:', err);
-          showState('error');
-        }
+        error() { showState('error'); }
       });
     }
 
-    // ── RENDER INICIAL — una sola vez ──────────────────────────
-    // Las cards se crean una vez. El filtro solo muestra/oculta.
-    // Las miniaturas se cargan lazily con IntersectionObserver.
+    // ── CHIPS ────────────────────────────────────────────────────
+    function buildChips() {
+      const categorias = [...new Set(allVideos.map(v => v.categoria).filter(Boolean))].sort();
+      const tipos      = [...new Set(allVideos.map(v => v.tipo).filter(Boolean))].sort();
+      const row        = document.getElementById('filtersRow');
+
+      let html = `<button class="chip fav-chip" onclick="toggleChip('favs')" id="chip-favs">⭐ Favoritos</button>`;
+
+      if (categorias.length) {
+        html += `<div class="chip-divider"></div>`;
+        categorias.forEach(c => {
+          html += `<button class="chip" onclick="toggleChip('cat','${escAttr(c)}')" id="chip-cat-${escAttr(c)}">${escHtml(c)}</button>`;
+        });
+      }
+      if (tipos.length) {
+        html += `<div class="chip-divider"></div>`;
+        tipos.forEach(t => {
+          html += `<button class="chip" onclick="toggleChip('tipo','${escAttr(t)}')" id="chip-tipo-${escAttr(t)}">${escHtml(t)}</button>`;
+        });
+      }
+      row.innerHTML = html;
+    }
+
+    function toggleChip(field, value) {
+      if (field === 'favs') {
+        activeChip = activeChip === 'favs' ? null : 'favs';
+      } else {
+        const key = `${field}:${value}`;
+        activeChip = (activeChip && activeChip.key === key) ? null : { field, value, key };
+      }
+      updateChipUI();
+      applyFilter();
+    }
+
+    function updateChipUI() {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      if (!activeChip) return;
+      if (activeChip === 'favs') {
+        document.getElementById('chip-favs')?.classList.add('active');
+      } else {
+        const prefix = activeChip.field === 'cat' ? 'chip-cat-' : 'chip-tipo-';
+        document.getElementById(`${prefix}${escAttr(activeChip.value)}`)?.classList.add('active');
+      }
+    }
+
+    // ── RENDER INICIAL ───────────────────────────────────────────
     function renderAllCards() {
       const grid = document.getElementById('grid');
-
-      grid.innerHTML = allVideos.map((v, i) => `
-        <a class="card"
-           data-index="${i}"
-           data-id="${escAttr(v.id)}"
+      grid.innerHTML = allVideos.map((v, i) => {
+        const isFav      = favorites.includes(v.id);
+        const incomplete = !v.categoria && !v.tipo && !v.equipos && !v.industria;
+        return `
+        <a class="card${incomplete ? ' incomplete' : ''}"
+           data-index="${i}" data-id="${escAttr(v.id)}"
            data-text="${escAttr([v.nombre, v.categoria, v.tipo, v.equipos, v.industria].join(' ').toLowerCase())}"
-           href="${videoUrl(v.id)}"
-           target="_blank" rel="noopener"
+           data-cat="${escAttr(v.categoria)}" data-tipo="${escAttr(v.tipo)}"
+           href="${videoUrl(v.id)}" target="_blank" rel="noopener"
            title="${escHtml(v.nombre)}">
           <div class="card-thumb">
             <div class="thumb-placeholder">
               <div class="play-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-                  <path d="M5 3l14 9-14 9V3z"/>
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M5 3l14 9-14 9V3z"/></svg>
               </div>
             </div>
+            <div class="thumb-skeleton"></div>
             <img data-id="${escAttr(v.id)}" alt="${escHtml(v.nombre)}" />
           </div>
           <div class="card-info">
@@ -733,73 +624,143 @@
             ${v.equipos || v.industria ? `<div class="card-meta">${escHtml(v.equipos || v.industria)}</div>` : ''}
             ${v.tipo ? `<span class="card-tag">${escHtml(v.tipo)}</span>` : ''}
           </div>
-        </a>
-      `).join('');
+          <button class="fav-btn${isFav ? ' active' : ''}"
+                  onclick="toggleFav(event,'${escAttr(v.id)}')"
+                  title="${isFav ? 'Quitar de favoritos' : 'Agregar a favoritos'}">
+            ${isFav ? '★' : '☆'}
+          </button>
+        </a>`;
+      }).join('');
 
-      // Observar cada card — cargar miniatura cuando entra en vista
-      const observer = new IntersectionObserver((entries) => {
+      // IntersectionObserver para lazy-load de thumbnails
+      const observer = new IntersectionObserver(entries => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             const img = entry.target.querySelector('img[data-id]');
-            if (img && !img.src) {
-              loadThumb(img, img.dataset.id);
-            }
+            if (img && !img.src) loadThumb(img, img.dataset.id);
             observer.unobserve(entry.target);
           }
         });
-      }, { rootMargin: '100px' });
+      }, { rootMargin: '120px' });
 
-      document.querySelectorAll('.card').forEach(card => observer.observe(card));
+      document.querySelectorAll('.card').forEach(c => observer.observe(c));
     }
 
-    // ── FILTRO — solo muestra/oculta cards existentes ──────────
+    // ── FAVORITOS ────────────────────────────────────────────────
+    function toggleFav(e, id) {
+      e.preventDefault(); e.stopPropagation();
+      const btn = e.currentTarget;
+      if (favorites.includes(id)) {
+        favorites = favorites.filter(f => f !== id);
+        btn.classList.remove('active');
+        btn.textContent = '☆';
+        btn.title = 'Agregar a favoritos';
+      } else {
+        favorites.push(id);
+        btn.classList.add('active');
+        btn.textContent = '★';
+        btn.title = 'Quitar de favoritos';
+      }
+      localStorage.setItem('cat_favs', JSON.stringify(favorites));
+      if (activeChip === 'favs') applyFilter();
+    }
+
+    // ── FILTRO ───────────────────────────────────────────────────
     function applyFilter() {
-      const q = searchQuery.toLowerCase().trim();
+      const q        = searchQuery.toLowerCase().trim();
       const keywords = q ? q.split(/\s+/).filter(Boolean) : [];
-      const cards = document.querySelectorAll('.card');
-      let visible = 0;
+      const cards    = document.querySelectorAll('.card');
+      let visible    = 0;
+
+      // Ordenar: favoritos primero si chip favs activo
+      const sorted = [...cards];
+      if (activeChip === 'favs') {
+        sorted.sort((a, b) => {
+          const aFav = favorites.includes(a.dataset.id) ? -1 : 1;
+          const bFav = favorites.includes(b.dataset.id) ? -1 : 1;
+          return aFav - bFav;
+        });
+        const grid = document.getElementById('grid');
+        sorted.forEach(c => grid.appendChild(c));
+      }
 
       cards.forEach(card => {
-        const text = card.dataset.text || '';
-        const match = keywords.length === 0 || keywords.every(kw => text.includes(kw));
+        const text  = card.dataset.text || '';
+        const cat   = card.dataset.cat  || '';
+        const tipo  = card.dataset.tipo || '';
+        const id    = card.dataset.id   || '';
+
+        let match = keywords.length === 0 || keywords.every(kw => text.includes(kw));
+
+        if (match && activeChip) {
+          if (activeChip === 'favs') {
+            match = favorites.includes(id);
+          } else if (activeChip.field === 'cat') {
+            match = cat === activeChip.value;
+          } else if (activeChip.field === 'tipo') {
+            match = tipo === activeChip.value;
+          }
+        }
+
         card.style.display = match ? '' : 'none';
         if (match) visible++;
       });
 
-      updateResultCount(visible);
-
-      // Estado vacío
-      if (visible === 0 && q) {
-        document.getElementById('emptyQuery').textContent = searchQuery;
-        showState('empty');
-      } else {
-        showState('grid');
-      }
+      updateCount(visible);
+      if (visible === 0) showState('empty');
+      else showState('grid');
     }
 
-    function updateResultCount(visible) {
+    function updateCount(visible) {
       const total = allVideos.length;
-      const found = visible !== undefined ? visible : total;
-      const el = document.getElementById('resultCount');
-      if (!searchQuery.trim()) {
+      const el    = document.getElementById('resultCount');
+      if (!searchQuery.trim() && !activeChip) {
         el.innerHTML = `<span>${total}</span> videos en catálogo`;
       } else {
-        el.innerHTML = `<span>${found}</span> resultado${found !== 1 ? 's' : ''} de ${total}`;
+        el.innerHTML = `<span>${visible}</span> resultado${visible !== 1 ? 's' : ''} de ${total}`;
       }
     }
 
-    // ── ESTADOS DE UI ───────────────────────────────────────────
-    function showState(state) {
-      document.getElementById('loadingState').style.display = state === 'loading' ? 'flex' : 'none';
-      document.getElementById('errorState').style.display   = state === 'error'   ? 'flex' : 'none';
-      document.getElementById('emptyState').style.display   = state === 'empty'   ? 'flex' : 'none';
-      document.getElementById('grid').style.display         = state === 'grid'    ? 'grid' : 'none';
+    // ── VISTA LISTA / GRILLA ─────────────────────────────────────
+    function toggleView() {
+      listView = !listView;
+      localStorage.setItem('cat_listview', listView ? '1' : '0');
+      applyViewMode();
+    }
+    function applyViewMode() {
+      const grid = document.getElementById('grid');
+      const btn  = document.getElementById('viewBtn');
+      if (listView) {
+        grid.classList.add('list-view');
+        btn.classList.add('active');
+        btn.title = 'Vista grilla';
+        document.getElementById('viewIcon').innerHTML = `
+          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
+          <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2"/>
+          <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2"/>`;
+      } else {
+        grid.classList.remove('list-view');
+        btn.classList.remove('active');
+        btn.title = 'Vista lista';
+        document.getElementById('viewIcon').innerHTML = `
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>`;
+      }
     }
 
-    // ── BÚSQUEDA ────────────────────────────────────────────────
+    // ── ALTO CONTRASTE ───────────────────────────────────────────
+    function toggleContrast() {
+      highContrast = !highContrast;
+      document.body.classList.toggle('hc', highContrast);
+      document.getElementById('hcBtn').classList.toggle('active', highContrast);
+      localStorage.setItem('cat_hc', highContrast ? '1' : '0');
+    }
+
+    // ── BÚSQUEDA ─────────────────────────────────────────────────
     const searchInput = document.getElementById('searchInput');
     const clearBtn    = document.getElementById('clearBtn');
-
     let debounceTimer;
     searchInput.addEventListener('input', () => {
       searchQuery = searchInput.value;
@@ -807,37 +768,35 @@
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(applyFilter, 220);
     });
-
     function clearSearch() {
-      searchInput.value = '';
-      searchQuery = '';
+      searchInput.value = ''; searchQuery = '';
       clearBtn.style.display = 'none';
-      searchInput.focus();
-      applyFilter();
+      searchInput.focus(); applyFilter();
     }
 
-    // ── HELPERS ────────────────────────────────────────────────
+    // ── UI STATE ─────────────────────────────────────────────────
+    function showState(state) {
+      document.getElementById('loadingState').style.display = state === 'loading' ? 'flex'  : 'none';
+      document.getElementById('errorState').style.display   = state === 'error'   ? 'flex'  : 'none';
+      document.getElementById('emptyState').style.display   = state === 'empty'   ? 'flex'  : 'none';
+      document.getElementById('grid').style.display         = state === 'grid'    ? 'grid'  : 'none';
+    }
+
+    // ── HELPERS ──────────────────────────────────────────────────
     function escHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
-
     function escAttr(str) {
-      return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      return String(str).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
 
-    // ── SERVICE WORKER ─────────────────────────────────────────
+    // ── SERVICE WORKER ───────────────────────────────────────────
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
-      });
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
     }
 
-    // ── INIT ───────────────────────────────────────────────────
-    loadCatalog();
+    // ── INIT ─────────────────────────────────────────────────────
+    if (sessionStorage.getItem('cat_auth') === '1') loadCatalog();
   </script>
 </body>
 </html>
