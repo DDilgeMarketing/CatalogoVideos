@@ -99,7 +99,6 @@
       text-align: center;
     }
 
-    /* CLAVE: input tipo password, sin restricciones numéricas */
     #pin-input {
       width: 100%;
       padding: 14px 16px;
@@ -112,7 +111,6 @@
       letter-spacing: 2px;
       outline: none;
       transition: border-color 0.2s;
-      /* SIN type=number, SIN inputmode=numeric, SIN maxlength=4 */
     }
     #pin-input:focus { border-color: var(--accent); }
     #pin-input.error { border-color: #ef4444; animation: shake 0.3s; }
@@ -343,7 +341,7 @@
       color: #111;
     }
 
-    /* Orange dot — card without metadata */
+    /* Orange dot – card without metadata */
     .dot-incomplete {
       position: absolute;
       top: 8px; right: 8px;
@@ -476,6 +474,28 @@
       display: block;
     }
 
+    /* Error dentro del modal */
+    .modal-error {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 32px 24px;
+      color: var(--text2);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    .modal-error a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 10px 20px;
+      background: var(--bg3);
+      border-radius: 8px;
+    }
+    .modal-error a:hover { background: var(--accent); color: #fff; }
+
     /* Loading spinner */
     #loading {
       display: flex;
@@ -495,7 +515,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* FAB invisible scroll-to-top */
+    /* FAB scroll-to-top */
     #fab {
       position: fixed;
       bottom: 20px; right: 16px;
@@ -522,10 +542,6 @@
   <div class="pin-box">
     <h2>Acceso al catálogo</h2>
     <p>Ingrese la clave de acceso</p>
-    <!--
-      CORRECCIÓN: input type="password" sin inputmode ni maxlength numérico.
-      Acepta cualquier combinación alfanumérica como "Hitec2025".
-    -->
     <input
       id="pin-input"
       type="password"
@@ -547,7 +563,7 @@
     <div class="header-top">
       <div class="logo">Hitec <span>Catálogo</span></div>
       <div class="header-actions">
-        <button class="icon-btn" id="btn-hc" title="Alto contraste">◑</button>
+        <button class="icon-btn" id="btn-hc" title="Alto contraste">☑</button>
         <button class="icon-btn" id="btn-view" title="Cambiar vista">⊞</button>
       </div>
     </div>
@@ -573,7 +589,7 @@
       <button class="modal-close" id="modal-close">✕</button>
     </div>
     <div class="modal-meta" id="modal-meta"></div>
-    <div class="video-frame">
+    <div class="video-frame" id="video-frame">
       <iframe id="modal-iframe" allowfullscreen allow="autoplay"></iframe>
     </div>
   </div>
@@ -583,10 +599,8 @@
 
 <script>
   // ── CONFIG ──
-  const ACCESS_PIN  = 'Hitec2025';
-  const PROXY_URL   = 'https://script.google.com/macros/s/AKfycbz6Mzjzueo0vdzQVyi670FTpxDvSmgXD39MVD4D0O2Wz64yHrLP-z_-hbQbJ1M0fSXTtw/exec';
-  const TOKEN       = 'Hv9kP3mX7qZ';
-  const CSV_URL     = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWbuOhAfDBTsyJKONMNcf9Lw3F6aaT1-Ovrif_ixyclRT1HeNNKdg415q4NZ74XchXvyUstM2Xfqyh/pub?gid=1463725900&single=true&output=csv';
+  const ACCESS_PIN = 'Hitec2025';
+  const CSV_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWbuOhAfDBTsyJKONMNcf9Lw3F6aaT1-OvrIf_ixyclRT1HeNNKdg415q4NZ74XchXvyUstM2XfqyH/pub?gid=1463725900&single=true&output=csv';
 
   // ── STATE ──
   let videos        = [];
@@ -594,6 +608,44 @@
   let activeChip    = null;
   let listMode      = localStorage.getItem('hc_view') === 'list';
   let highContrast  = localStorage.getItem('hc_hc') === '1';
+  let currentVideo  = null;
+
+  // ── HELPERS ──
+
+  // Normaliza un link: asegura que tenga https:// y formato /preview
+  function normalizeLink(url) {
+    if (!url) return '';
+    url = url.trim();
+    // Agregar protocolo si falta
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      if (url.startsWith('//')) {
+        url = 'https:' + url;
+      } else {
+        url = 'https://' + url;
+      }
+    }
+    // Asegurar que los links de Drive usen /preview (mejor para iframe)
+    if (url.includes('drive.google.com') && !url.includes('/preview') && !url.includes('export=') && !url.includes('thumbnail')) {
+      // Si tiene /view, reemplazar por /preview
+      url = url.replace('/view', '/preview');
+      // Si solo tiene el ID sin sufijo, agregar /preview
+      if (!url.endsWith('/preview')) {
+        url = url.replace(/\/file\/d\/([^/]+)\/?$/, '/file/d/$1/preview');
+      }
+    }
+    return url;
+  }
+
+  // Extrae el ID de archivo de una URL de Drive
+  function extractId(url) {
+    const m = url && url.match(/\/d\/([^/?&]+)/);
+    return m ? m[1] : null;
+  }
+
+  // URL de thumbnail usando Drive directamente (sin proxy externo)
+  function thumbUrl(fileId) {
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w320`;
+  }
 
   // ── PIN LOGIC ──
   const pinScreen = document.getElementById('pin-screen');
@@ -655,15 +707,6 @@
     return rows;
   }
 
-  function extractId(url) {
-    const m = url && url.match(/\/d\/([\w-]+)/);
-    return m ? m[1] : null;
-  }
-
-  function thumbUrl(fileId) {
-    return `${PROXY_URL}?id=${fileId}&token=${TOKEN}`;
-  }
-
   // ── INIT ──
   function initApp() {
     applyPrefs();
@@ -682,7 +725,7 @@
 
   async function fetchData() {
     try {
-      const res = await fetch(CSV_URL + '&t=' + Date.now());
+      const res  = await fetch(CSV_URL + '&t=' + Date.now());
       const text = await res.text();
       const rows = parseCSV(text);
 
@@ -695,16 +738,20 @@
       const indIdx  = headers.findIndex(h => h.includes('industria') || h.includes('rubro'));
       const linkIdx = headers.findIndex(h => h.includes('link') || h.includes('video'));
 
-      videos = rows.slice(1).map((r, i) => ({
-        id: i,
-        name: (r[nameIdx] || '').trim(),
-        cat:  (r[catIdx]  || '').trim(),
-        type: (r[typeIdx] || '').trim(),
-        equip:(r[equipIdx]|| '').trim(),
-        ind:  (r[indIdx]  || '').trim(),
-        link: (r[linkIdx] || '').trim(),
-        fileId: extractId((r[linkIdx] || '').trim()),
-      })).filter(v => v.name && v.link);
+      videos = rows.slice(1).map((r, i) => {
+        const rawLink = (r[linkIdx] || '').trim();
+        const link = normalizeLink(rawLink);
+        return {
+          id:     i,
+          name:   (r[nameIdx]  || '').trim(),
+          cat:    (r[catIdx]   || '').trim(),
+          type:   (r[typeIdx]  || '').trim(),
+          equip:  (r[equipIdx] || '').trim(),
+          ind:    (r[indIdx]   || '').trim(),
+          link:   link,
+          fileId: extractId(link),
+        };
+      }).filter(v => v.name && v.link);
 
       document.getElementById('loading').style.display = 'none';
       buildChips();
@@ -721,9 +768,9 @@
     const wrap = document.getElementById('chips-wrap');
     wrap.innerHTML = '';
 
-    const all = chip('Todos', null);
-    wrap.appendChild(all);
-    if (favorites.length) wrap.appendChild(chip('⭐ Favoritos', '__favs__'));
+    const allBtn = chip('Todos', null);
+    wrap.appendChild(allBtn);
+    if (favorites.length) wrap.appendChild(chip('❤ Favoritos', '__favs__'));
     cats.forEach(c => wrap.appendChild(chip(c, c)));
   }
 
@@ -735,19 +782,18 @@
       activeChip = activeChip === value ? null : value;
       document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
       el.classList.toggle('active', activeChip === value);
-      if (activeChip === null) all.classList.add('active');
+      if (activeChip === null) document.querySelector('.chip').classList.add('active');
       renderCards();
     });
-    const all = el; // alias for Todos
     if (value === null) el.classList.add('active');
     return el;
   }
 
   // ── RENDER ──
   function renderCards() {
-    const q    = document.getElementById('search').value.trim().toLowerCase();
-    const grid = document.getElementById('grid');
-    const empty= document.getElementById('empty');
+    const q     = document.getElementById('search').value.trim().toLowerCase();
+    const grid  = document.getElementById('grid');
+    const empty = document.getElementById('empty');
     grid.innerHTML = '';
 
     let filtered = videos;
@@ -760,10 +806,10 @@
 
     if (q) {
       filtered = filtered.filter(v =>
-        v.name.toLowerCase().includes(q) ||
-        v.cat.toLowerCase().includes(q)  ||
-        v.type.toLowerCase().includes(q) ||
-        v.equip.toLowerCase().includes(q)||
+        v.name.toLowerCase().includes(q)  ||
+        v.cat.toLowerCase().includes(q)   ||
+        v.type.toLowerCase().includes(q)  ||
+        v.equip.toLowerCase().includes(q) ||
         v.ind.toLowerCase().includes(q)
       );
     }
@@ -814,6 +860,7 @@
 
     const img = document.createElement('img');
     img.alt = v.name;
+    img.loading = 'lazy';
     if (v.fileId) {
       img.src = thumbUrl(v.fileId);
       img.addEventListener('load', () => {
@@ -890,6 +937,7 @@
 
   // ── MODAL ──
   function openModal(v) {
+    currentVideo = v;
     document.getElementById('modal-title').textContent = v.name;
 
     const metaEl = document.getElementById('modal-meta');
@@ -901,15 +949,76 @@
       metaEl.appendChild(tag);
     });
 
-    document.getElementById('modal-iframe').src = v.link;
+    // Limpiar frame anterior
+    const frame = document.getElementById('video-frame');
+    frame.innerHTML = '';
+
+    const src = v.link;
+
+    if (src && src.includes('drive.google.com')) {
+      // Usar iframe para Drive
+      const iframe = document.createElement('iframe');
+      iframe.id = 'modal-iframe';
+      iframe.allowFullscreen = true;
+      iframe.allow = 'autoplay';
+      iframe.src = src;
+
+      // Detectar si el iframe falla (CORS o bloqueo) y mostrar botón de apertura
+      iframe.addEventListener('error', () => showOpenButton(v));
+
+      frame.appendChild(iframe);
+
+      // Fallback: si después de 8 segundos el iframe sigue en blanco, mostrar botón
+      setTimeout(() => {
+        if (document.getElementById('modal').classList.contains('open') && currentVideo === v) {
+          // No podemos detectar 404 dentro del iframe por CORS, así que agregamos
+          // un botón "abrir en Drive" siempre visible debajo
+          showOpenButton(v, true);
+        }
+      }, 8000);
+
+    } else if (src) {
+      // Otro tipo de URL
+      const iframe = document.createElement('iframe');
+      iframe.id = 'modal-iframe';
+      iframe.allowFullscreen = true;
+      iframe.src = src;
+      frame.appendChild(iframe);
+    } else {
+      showOpenButton(v);
+    }
+
     document.getElementById('modal').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
 
+  function showOpenButton(v, asExtra) {
+    const frame = document.getElementById('video-frame');
+    if (asExtra) {
+      // Agregar botón debajo del iframe existente sin reemplazarlo
+      if (frame.querySelector('.open-drive-btn')) return;
+      const btn = document.createElement('a');
+      btn.className = 'open-drive-btn';
+      btn.href = v.link;
+      btn.target = '_blank';
+      btn.rel = 'noopener';
+      btn.style.cssText = 'display:block;text-align:center;padding:8px;background:var(--bg3);color:var(--accent);font-size:0.8rem;text-decoration:none;';
+      btn.textContent = '↗ Abrir video en Google Drive';
+      frame.appendChild(btn);
+    } else {
+      frame.innerHTML = `
+        <div class="modal-error">
+          <div>No se puede reproducir aquí. Abrí el video directamente en Drive.</div>
+          <a href="${v.link}" target="_blank" rel="noopener">↗ Abrir en Google Drive</a>
+        </div>`;
+    }
+  }
+
   function closeModal() {
     document.getElementById('modal').classList.remove('open');
-    document.getElementById('modal-iframe').src = '';
+    document.getElementById('video-frame').innerHTML = '<iframe id="modal-iframe" allowfullscreen allow="autoplay"></iframe>';
     document.body.style.overflow = '';
+    currentVideo = null;
   }
 
   document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -948,7 +1057,6 @@
   fab.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
   // ── SERVICE WORKER ──
-  // Desregistra SWs viejos antes de registrar el nuevo (evita cachés obsoletas)
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(regs => {
       regs.forEach(r => r.unregister());
