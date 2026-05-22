@@ -208,17 +208,19 @@
     }
 
     .card-thumb img {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
-      transition: opacity 0.3s;
+      opacity: 0;
+      transition: opacity 0.4s ease;
     }
 
-    .card-thumb img.loading { opacity: 0; }
-    .card-thumb img.loaded  { opacity: 1; }
+    .card-thumb img.loaded { opacity: 1; }
 
-    /* Placeholder cuando no carga la miniatura */
+    /* Placeholder — siempre visible detrás de la imagen */
     .thumb-placeholder {
       position: absolute;
       inset: 0;
@@ -232,7 +234,10 @@
       gap: 8px;
       text-align: center;
       padding: 8px;
+      z-index: 0;
     }
+
+    .card-thumb img { z-index: 1; }
 
     .play-icon {
       width: 36px;
@@ -448,7 +453,6 @@
 
     // ── ESTADO ─────────────────────────────────────────────────
     let allVideos   = [];
-    let filtered    = [];
     let searchQuery = '';
 
     // ── EXTRACCIÓN DE ID DE DRIVE ───────────────────────────────
@@ -500,6 +504,7 @@
           document.getElementById('lastUpdate').textContent =
             'Actualizado: ' + new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
 
+          renderAllCards();
           applyFilter();
           showState('grid');
         },
@@ -510,52 +515,18 @@
       });
     }
 
-    // ── FILTRO ─────────────────────────────────────────────────
-    function applyFilter() {
-      const q = searchQuery.toLowerCase().trim();
-      const keywords = q ? q.split(/\s+/).filter(Boolean) : [];
-
-      if (keywords.length === 0) {
-        filtered = [...allVideos];
-      } else {
-        filtered = allVideos.filter(v => {
-          const text = [v.nombre, v.categoria, v.tipo, v.equipos, v.industria]
-            .join(' ').toLowerCase();
-          return keywords.every(kw => text.includes(kw));
-        });
-      }
-
-      updateResultCount();
-      renderGrid();
-    }
-
-    function updateResultCount() {
-      const total = allVideos.length;
-      const found = filtered.length;
-      const el = document.getElementById('resultCount');
-
-      if (!searchQuery.trim()) {
-        el.innerHTML = `<span>${total}</span> videos en catálogo`;
-      } else {
-        el.innerHTML = `<span>${found}</span> resultado${found !== 1 ? 's' : ''} de ${total}`;
-      }
-    }
-
-    // ── RENDER DE GRILLA ────────────────────────────────────────
-    function renderGrid() {
+    // ── RENDER INICIAL — una sola vez ──────────────────────────
+    // Las cards se crean una vez y permanecen en el DOM.
+    // El filtro solo muestra u oculta — las imágenes no se recargan.
+    function renderAllCards() {
       const grid = document.getElementById('grid');
-
-      if (filtered.length === 0 && searchQuery.trim()) {
-        grid.innerHTML = '';
-        document.getElementById('emptyQuery').textContent = searchQuery;
-        showState('empty');
-        return;
-      }
-
-      showState('grid');
-
-      grid.innerHTML = filtered.map(v => `
-        <a class="card" href="${videoUrl(v.id)}" target="_blank" rel="noopener" title="${escHtml(v.nombre)}">
+      grid.innerHTML = allVideos.map((v, i) => `
+        <a class="card"
+           data-index="${i}"
+           data-text="${escAttr([v.nombre, v.categoria, v.tipo, v.equipos, v.industria].join(' ').toLowerCase())}"
+           href="${videoUrl(v.id)}"
+           target="_blank" rel="noopener"
+           title="${escHtml(v.nombre)}">
           <div class="card-thumb">
             <div class="thumb-placeholder">
               <div class="play-icon">
@@ -567,14 +538,11 @@
             <img
               src="${thumbUrl(v.id)}"
               alt="${escHtml(v.nombre)}"
-              class="loading"
-              loading="lazy"
-              onload="this.classList.replace('loading','loaded')"
-              onerror="this.style.display='none'"
+              onload="this.classList.add('loaded')"
             />
           </div>
           <div class="card-info">
-            <div class="card-name">${highlight(escHtml(v.nombre), searchQuery)}</div>
+            <div class="card-name">${escHtml(v.nombre)}</div>
             ${v.equipos || v.industria ? `<div class="card-meta">${escHtml(v.equipos || v.industria)}</div>` : ''}
             ${v.tipo ? `<span class="card-tag">${escHtml(v.tipo)}</span>` : ''}
           </div>
@@ -582,16 +550,40 @@
       `).join('');
     }
 
-    // ── HIGHLIGHT DE BÚSQUEDA ───────────────────────────────────
-    function highlight(text, query) {
-      if (!query.trim()) return text;
-      const keywords = query.trim().split(/\s+/).filter(Boolean);
-      let result = text;
-      keywords.forEach(kw => {
-        const regex = new RegExp(`(${escRegex(kw)})`, 'gi');
-        result = result.replace(regex, '<mark style="background:#fef08a;color:#0d2137;border-radius:2px;padding:0 1px;">$1</mark>');
+    // ── FILTRO — solo muestra/oculta cards existentes ──────────
+    function applyFilter() {
+      const q = searchQuery.toLowerCase().trim();
+      const keywords = q ? q.split(/\s+/).filter(Boolean) : [];
+      const cards = document.querySelectorAll('.card');
+      let visible = 0;
+
+      cards.forEach(card => {
+        const text = card.dataset.text || '';
+        const match = keywords.length === 0 || keywords.every(kw => text.includes(kw));
+        card.style.display = match ? '' : 'none';
+        if (match) visible++;
       });
-      return result;
+
+      updateResultCount(visible);
+
+      // Estado vacío
+      if (visible === 0 && q) {
+        document.getElementById('emptyQuery').textContent = searchQuery;
+        showState('empty');
+      } else {
+        showState('grid');
+      }
+    }
+
+    function updateResultCount(visible) {
+      const total = allVideos.length;
+      const found = visible !== undefined ? visible : total;
+      const el = document.getElementById('resultCount');
+      if (!searchQuery.trim()) {
+        el.innerHTML = `<span>${total}</span> videos en catálogo`;
+      } else {
+        el.innerHTML = `<span>${found}</span> resultado${found !== 1 ? 's' : ''} de ${total}`;
+      }
     }
 
     // ── ESTADOS DE UI ───────────────────────────────────────────
@@ -631,8 +623,8 @@
         .replace(/"/g, '&quot;');
     }
 
-    function escRegex(str) {
-      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    function escAttr(str) {
+      return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     // ── SERVICE WORKER ─────────────────────────────────────────
