@@ -710,7 +710,8 @@
       buildChips();
       renderCards();
     } catch(e) {
-      document.getElementById('loading').innerHTML = '⚠️ Error al cargar el catálogo. Compruebe la conexión.';
+      document.getElementById('loading').innerHTML =
+        '⚠️ Error al cargar el catálogo.<br><small style="opacity:.6">' + e.message + '</small>';
     }
   }
 
@@ -947,8 +948,13 @@
   fab.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
   // ── SERVICE WORKER ──
+  // Desregistra SWs viejos antes de registrar el nuevo (evita cachés obsoletas)
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister());
+    }).then(() => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
   }
 </script>
 </body>
