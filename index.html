@@ -541,8 +541,9 @@
       position: relative;
       width: 100%;
       aspect-ratio: 16 / 9;
-      background: #000;
+      background: var(--bg3);
       overflow: hidden;
+      flex-shrink: 0;
     }
     .video-wrap iframe {
       position: absolute; inset: 0;
@@ -551,12 +552,12 @@
       display: block;
     }
 
-    /* Spinner de carga dentro del modal — sin fondo oscuro */
+    /* Spinner de carga dentro del modal */
     .video-loading {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
       background: transparent;
-      z-index: 1;
+      z-index: 2;
       pointer-events: none;
     }
     .video-loading.hidden { display: none; }
@@ -566,6 +567,31 @@
       border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
+    }
+
+    /* Tap-to-play overlay (móvil) */
+    .tap-play {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px;
+      background: rgba(4,22,28,0.55);
+      cursor: pointer;
+      z-index: 3;
+    }
+    .tap-play-icon {
+      width: 60px; height: 60px;
+      background: rgba(38,165,145,0.92);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .tap-play-label {
+      color: rgba(255,255,255,0.85);
+      font-size: 0.78rem;
+      letter-spacing: 0.02em;
     }
 
     /* Link "Abrir en Drive" siempre visible pero discreto */
@@ -690,17 +716,18 @@
 <!-- ── MODAL DE VIDEO ── -->
 <div id="modal" role="dialog" aria-modal="true">
   <div class="modal-box">
+    <!-- Video SIEMPRE al tope — en móvil y desktop -->
+    <div class="video-wrap" id="video-wrap">
+      <div class="video-loading" id="video-loading">
+        <div class="video-spinner"></div>
+      </div>
+      <!-- iframe / tap-to-play se insertan dinámicamente -->
+    </div>
     <div class="modal-header">
       <div class="modal-title" id="modal-title"></div>
       <button class="modal-close" id="modal-close" aria-label="Cerrar">✕</button>
     </div>
     <div class="modal-meta" id="modal-meta"></div>
-    <div class="video-wrap" id="video-wrap">
-      <div class="video-loading" id="video-loading">
-        <div class="video-spinner"></div>
-      </div>
-      <!-- iframe se inserta dinámicamente -->
-    </div>
     <div class="modal-footer">
       <a id="drive-link" href="#" target="_blank" rel="noopener">↗ Abrir en Google Drive</a>
     </div>
@@ -1084,6 +1111,29 @@
   }
 
   // ── MODAL ────────────────────────────────────────────────────────────
+  const isMobile = () => window.innerWidth <= 768;
+
+  function injectIframe(v, wrap, loadingEl) {
+    // Limpiar tap-to-play si existe
+    const tapPlay = wrap.querySelector('.tap-play');
+    if (tapPlay) tapPlay.remove();
+    const thumbPrev = wrap.querySelector('.thumb-prev');
+    if (thumbPrev) thumbPrev.remove();
+
+    loadingEl.classList.remove('hidden');
+
+    const iframe = document.createElement('iframe');
+    iframe.allowFullscreen = true;
+    iframe.allow = 'autoplay; fullscreen';
+    iframe.src   = v.link;
+    iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:none;display:block;';
+
+    iframe.addEventListener('load', () => loadingEl.classList.add('hidden'));
+    setTimeout(() => loadingEl.classList.add('hidden'), 3000);
+
+    wrap.appendChild(iframe);
+  }
+
   function openModal(v) {
     currentVideo = v;
     document.getElementById('modal-title').textContent = v.name;
@@ -1098,41 +1148,51 @@
       metaEl.appendChild(tag);
     });
 
-    // Link directo a Drive (siempre visible, discreto)
+    // Link directo a Drive
     const driveUrl = v.link.replace('/preview', '/view');
     document.getElementById('drive-link').href = driveUrl;
 
-    // Limpiar iframe anterior
+    // Limpiar contenido anterior del video-wrap (iframe o tap-play)
     const wrap = document.getElementById('video-wrap');
-    const existingIframe = wrap.querySelector('iframe');
-    if (existingIframe) existingIframe.remove();
+    wrap.querySelectorAll('iframe, .tap-play, .thumb-prev').forEach(el => el.remove());
 
-    // Mostrar spinner de carga
     const loadingEl = document.getElementById('video-loading');
-    loadingEl.classList.remove('hidden');
+    loadingEl.classList.add('hidden'); // empieza oculto hasta que se cargue algo
 
-    // Crear iframe
-    const iframe = document.createElement('iframe');
-    iframe.allowFullscreen = true;
-    iframe.allow = 'autoplay; fullscreen';
-    iframe.src   = v.link; // Ya está en formato /preview
+    if (isMobile()) {
+      // ── MÓVIL: mostrar miniatura + botón ▶, cargar iframe solo al tocar ──
+      // Thumbnail de fondo
+      const thumb = document.createElement('img');
+      thumb.className = 'thumb-prev';
+      thumb.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;';
+      thumb.src = thumbUrl(v.fileId);
+      thumb.onerror = () => { thumb.style.display = 'none'; };
 
-    // Ocultar spinner cuando el iframe carga
-    iframe.addEventListener('load', () => {
-      loadingEl.classList.add('hidden');
-    });
-    // Fallback: ocultar spinner en móvil si el evento load no se dispara
-    setTimeout(() => loadingEl.classList.add('hidden'), 2500);
+      // Overlay tap-to-play
+      const tapOverlay = document.createElement('div');
+      tapOverlay.className = 'tap-play';
+      tapOverlay.innerHTML =
+        '<div class="tap-play-icon">▶</div>' +
+        '<span class="tap-play-label">Tocar para reproducir</span>';
 
-    wrap.appendChild(iframe);
+      tapOverlay.addEventListener('click', () => {
+        injectIframe(v, wrap, loadingEl);
+      });
 
+      wrap.appendChild(thumb);
+      wrap.appendChild(tapOverlay);
+    } else {
+      // ── DESKTOP: cargar iframe directo ──
+      injectIframe(v, wrap, loadingEl);
+    }
+
+    // Aplicar estilos del modal vía JS (bypasea caché CSS)
     const modalEl = document.getElementById('modal');
     const boxEl   = document.querySelector('.modal-box');
 
-    if (window.innerWidth <= 768) {
-      // Móvil: forzar estilos vía JS para bypasear caché CSS
-      modalEl.style.cssText = 'display:flex !important; position:fixed; inset:0; padding:0; overflow-y:auto; align-items:flex-start; justify-content:stretch; background:rgba(4,22,28,0.95); z-index:500;';
-      boxEl.style.cssText   = 'width:100%; max-width:100%; min-height:100%; height:auto; max-height:none; border-radius:0; flex-shrink:0; display:flex; flex-direction:column; align-self:flex-start; background:var(--bg2); box-shadow:none;';
+    if (isMobile()) {
+      modalEl.style.cssText = 'display:flex;position:fixed;top:0;left:0;right:0;bottom:0;padding:0;overflow-y:auto;align-items:flex-start;justify-content:stretch;background:rgba(4,22,28,0.95);z-index:500;';
+      boxEl.style.cssText   = 'width:100%;max-width:100%;min-height:100%;height:auto;max-height:none;border-radius:0;flex-shrink:0;display:flex;flex-direction:column;align-self:flex-start;background:#094c5a;box-shadow:none;overflow:visible;';
       modalEl.scrollTop = 0;
     } else {
       modalEl.style.cssText = '';
@@ -1146,19 +1206,17 @@
   function closeModal() {
     const modalEl = document.getElementById('modal');
     const boxEl   = document.querySelector('.modal-box');
+
     modalEl.style.cssText = '';
     boxEl.style.cssText   = '';
     modalEl.classList.remove('open');
     document.body.style.overflow = '';
 
-    // Detener el video removiendo el iframe
+    // Limpiar contenido del video-wrap
     const wrap = document.getElementById('video-wrap');
-    const iframe = wrap.querySelector('iframe');
-    if (iframe) iframe.remove();
+    wrap.querySelectorAll('iframe, .tap-play, .thumb-prev').forEach(el => el.remove());
 
-    // Resetear spinner
     document.getElementById('video-loading').classList.remove('hidden');
-
     currentVideo = null;
   }
 
@@ -1202,7 +1260,7 @@
   // verifique si cambió el archivo sw.js al desplegar una actualización.
   if ('serviceWorker' in navigator) {
     // Versión: actualizar este número con cada deploy
-    const SW_VERSION = '20260523b';
+    const SW_VERSION = '20260523c';
     navigator.serviceWorker.register('sw.js?v=' + SW_VERSION)
       .then(reg => {
         // Forzar verificación de actualización en cada carga de página
