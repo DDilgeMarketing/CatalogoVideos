@@ -468,25 +468,25 @@
 
     /* ── MÓVIL: pantalla completa, como app de video ── */
     @media (max-width: 768px) {
-      #modal       { padding: 0; }
-      #modal.open  { display: block; }
+      #modal       { padding: 0 !important; }
+      #modal.open  { display: flex !important; align-items: flex-start !important; justify-content: stretch !important; overflow-y: auto !important; }
 
       .modal-box {
-        position: fixed;
-        inset: 0;
-        width: 100%;
-        max-width: 100%;
-        max-height: 100%;
-        height: 100%;
-        border-radius: 0;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 100% !important;
+        max-height: none !important;
+        height: auto !important;
+        border-radius: 0 !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-self: flex-start !important;
       }
 
       /* Video ocupa todo el ancho, altura proporcional 16:9 */
       .video-wrap {
-        width: 100%;
+        width: 100% !important;
         aspect-ratio: 16 / 9;
         flex-shrink: 0;
       }
@@ -551,14 +551,13 @@
       display: block;
     }
 
-    /* Spinner de carga dentro del modal */
+    /* Spinner de carga dentro del modal — sin fondo oscuro */
     .video-loading {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.5); /* Semi-transparente, no tapa el video */
+      background: transparent;
       z-index: 1;
       pointer-events: none;
-      transition: opacity 0.4s;
     }
     .video-loading.hidden { display: none; }
     .video-spinner {
@@ -1127,12 +1126,29 @@
 
     wrap.appendChild(iframe);
 
-    document.getElementById('modal').classList.add('open');
+    const modalEl = document.getElementById('modal');
+    const boxEl   = document.querySelector('.modal-box');
+
+    if (window.innerWidth <= 768) {
+      // Móvil: forzar estilos vía JS para bypasear caché CSS
+      modalEl.style.cssText = 'display:flex !important; position:fixed; inset:0; padding:0; overflow-y:auto; align-items:flex-start; justify-content:stretch; background:rgba(4,22,28,0.95); z-index:500;';
+      boxEl.style.cssText   = 'width:100%; max-width:100%; min-height:100%; height:auto; max-height:none; border-radius:0; flex-shrink:0; display:flex; flex-direction:column; align-self:flex-start; background:var(--bg2); box-shadow:none;';
+      modalEl.scrollTop = 0;
+    } else {
+      modalEl.style.cssText = '';
+      boxEl.style.cssText   = '';
+      modalEl.classList.add('open');
+    }
+
     document.body.style.overflow = 'hidden';
   }
 
   function closeModal() {
-    document.getElementById('modal').classList.remove('open');
+    const modalEl = document.getElementById('modal');
+    const boxEl   = document.querySelector('.modal-box');
+    modalEl.style.cssText = '';
+    boxEl.style.cssText   = '';
+    modalEl.classList.remove('open');
     document.body.style.overflow = '';
 
     // Detener el video removiendo el iframe
@@ -1186,7 +1202,7 @@
   // verifique si cambió el archivo sw.js al desplegar una actualización.
   if ('serviceWorker' in navigator) {
     // Versión: actualizar este número con cada deploy
-    const SW_VERSION = '20260523';
+    const SW_VERSION = '20260523b';
     navigator.serviceWorker.register('sw.js?v=' + SW_VERSION)
       .then(reg => {
         // Forzar verificación de actualización en cada carga de página
