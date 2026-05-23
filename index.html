@@ -797,7 +797,7 @@
       const typeIdx  = headers.findIndex(h => h.includes('tipo'));
       const equipIdx = headers.findIndex(h => h.includes('equipo'));
       const indIdx   = headers.findIndex(h => h.includes('industria') || h.includes('rubro'));
-      const linkIdx  = headers.findIndex(h => h.includes('link') || h.includes('video'));
+      const linkIdx  = headers.findIndex(h => h.includes('link'));
 
       if (nameIdx === -1 || linkIdx === -1) {
         throw new Error('No se encontraron las columnas "Nombre del Video" y "Link al Video" en el Sheet.');
