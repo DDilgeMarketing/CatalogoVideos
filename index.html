@@ -448,39 +448,54 @@
       background: var(--modal-bg);
       z-index: 500;
       display: none;
-      /* Centrado con transform — funciona en todos los navegadores mobile */
-      overflow-y: auto;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
     }
-    #modal.open { display: block; }
+    #modal.open { display: flex; }
 
     .modal-box {
       background: var(--bg2);
       border-radius: var(--radius);
-      width: calc(100% - 32px);
+      width: 100%;
       max-width: 860px;
       box-shadow: 0 8px 48px rgba(0,0,0,0.7);
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      /* Centrado absoluto: siempre al centro de la pantalla */
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
       max-height: calc(100vh - 32px);
     }
 
-    /* Móvil */
+    /* ── MÓVIL: pantalla completa, como app de video ── */
     @media (max-width: 768px) {
+      #modal       { padding: 0; }
+      #modal.open  { display: block; }
+
       .modal-box {
-        width: calc(100% - 24px);
-        max-height: calc(100svh - 24px);
-        border-radius: 10px;
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        height: 100%;
+        border-radius: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
       }
-      .modal-header { padding: 10px 12px 6px; }
-      .modal-title  { font-size: 0.88rem; }
-      .modal-meta   { padding: 0 12px 8px; }
-      .modal-footer { padding: 5px 12px; font-size: 0.7rem; }
+
+      /* Video ocupa todo el ancho, altura proporcional 16:9 */
+      .video-wrap {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        flex-shrink: 0;
+      }
+
+      /* El resto del contenido debajo del video */
+      .modal-header { padding: 12px 14px 8px; flex-shrink: 0; }
+      .modal-title  { font-size: 0.92rem; }
+      .modal-meta   { padding: 0 14px 10px; flex-shrink: 0; }
+      .modal-footer { padding: 8px 14px; flex-shrink: 0; margin-top: auto; }
     }
     .modal-header {
       display: flex; align-items: flex-start; justify-content: space-between;
