@@ -29,7 +29,7 @@
       --chip-active: #3b82f6;
       --star: #f59e0b;
       --orange: #f97316;
-      --modal-bg: rgba(0,0,0,0.85);
+      --modal-bg: rgba(0,0,0,0.88);
       --radius: 12px;
       --shadow: 0 4px 24px rgba(0,0,0,0.4);
     }
@@ -99,6 +99,7 @@
       text-align: center;
     }
 
+    /* Input de clave: tipo text para que acepte letras/números/símbolos en móvil */
     #pin-input {
       width: 100%;
       padding: 14px 16px;
@@ -111,6 +112,7 @@
       letter-spacing: 2px;
       outline: none;
       transition: border-color 0.2s;
+      -webkit-text-security: disc; /* Oculta caracteres en WebKit como password */
     }
     #pin-input:focus { border-color: var(--accent); }
     #pin-input.error { border-color: #ef4444; animation: shake 0.3s; }
@@ -187,9 +189,7 @@
     .icon-btn:hover, .icon-btn.active { color: var(--text); background: var(--bg3); }
 
     /* Search */
-    .search-wrap {
-      position: relative;
-    }
+    .search-wrap { position: relative; }
     #search {
       width: 100%;
       padding: 10px 14px 10px 38px;
@@ -288,9 +288,7 @@
       font-size: 0.85rem;
       -webkit-line-clamp: 2;
     }
-    #grid.list-mode .card-meta {
-      font-size: 0.72rem;
-    }
+    #grid.list-mode .card-meta { font-size: 0.72rem; }
 
     /* Thumbnail */
     .thumb-wrap {
@@ -309,7 +307,7 @@
     }
     .thumb-wrap img.loaded { opacity: 1; }
 
-    /* Skeleton */
+    /* Skeleton shimmer */
     .skeleton {
       position: absolute; inset: 0;
       background: linear-gradient(90deg, var(--bg3) 25%, var(--bg2) 50%, var(--bg3) 75%);
@@ -322,6 +320,15 @@
       0% { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
+
+    /* Placeholder cuando no hay miniatura */
+    .thumb-placeholder {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+      opacity: 0.25;
+    }
+    .thumb-placeholder.hidden { display: none; }
 
     /* Play overlay */
     .play-overlay {
@@ -341,7 +348,7 @@
       color: #111;
     }
 
-    /* Orange dot – card without metadata */
+    /* Orange dot – card sin metadatos */
     .dot-incomplete {
       position: absolute;
       top: 8px; right: 8px;
@@ -409,7 +416,7 @@
       display: none;
     }
 
-    /* Modal */
+    /* ── MODAL ── */
     #modal {
       position: fixed; inset: 0;
       background: var(--modal-bg);
@@ -425,16 +432,18 @@
       background: var(--bg2);
       border-radius: var(--radius);
       width: 100%;
-      max-width: 760px;
+      max-width: 820px;
       box-shadow: 0 8px 48px rgba(0,0,0,0.7);
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      max-height: 95vh;
     }
     .modal-header {
       display: flex; align-items: flex-start; justify-content: space-between;
-      padding: 14px 16px 12px;
+      padding: 14px 16px 10px;
       gap: 12px;
+      flex-shrink: 0;
     }
     .modal-title {
       font-size: 0.95rem;
@@ -447,56 +456,75 @@
       border: none;
       color: var(--text);
       border-radius: 6px;
-      width: 30px; height: 30px;
+      width: 32px; height: 32px;
       cursor: pointer;
       font-size: 1.1rem;
       flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
     }
+    .modal-close:hover { background: #475569; }
+
     .modal-meta {
-      padding: 0 16px 12px;
+      padding: 0 16px 10px;
       font-size: 0.78rem;
       color: var(--text2);
       display: flex; flex-wrap: wrap; gap: 6px;
+      flex-shrink: 0;
     }
     .meta-tag {
       background: var(--chip-bg);
       border-radius: 4px;
       padding: 2px 8px;
     }
-    .video-frame {
-      width: 100%;
-      aspect-ratio: 16/9;
+
+    /* Contenedor del video: ocupa el espacio disponible */
+    .video-wrap {
+      flex: 1;
+      position: relative;
+      background: #000;
+      min-height: 200px;
     }
-    .video-frame iframe {
+    .video-wrap iframe {
+      position: absolute; inset: 0;
       width: 100%; height: 100%;
       border: none;
       display: block;
     }
 
-    /* Error dentro del modal */
-    .modal-error {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 32px 24px;
-      color: var(--text2);
-      font-size: 0.9rem;
-      text-align: center;
+    /* Spinner de carga dentro del modal */
+    .video-loading {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: #000;
+      z-index: 1;
+      pointer-events: none;
     }
-    .modal-error a {
+    .video-loading.hidden { display: none; }
+    .video-spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    /* Link "Abrir en Drive" siempre visible pero discreto */
+    .modal-footer {
+      padding: 8px 16px;
+      font-size: 0.75rem;
+      color: var(--text2);
+      text-align: right;
+      flex-shrink: 0;
+      border-top: 1px solid var(--card-border);
+    }
+    .modal-footer a {
       color: var(--accent);
       text-decoration: none;
-      font-weight: 600;
-      padding: 10px 20px;
-      background: var(--bg3);
-      border-radius: 8px;
     }
-    .modal-error a:hover { background: var(--accent); color: #fff; }
+    .modal-footer a:hover { text-decoration: underline; }
 
-    /* Loading spinner */
+    /* Loading inicial */
     #loading {
       display: flex;
       align-items: center;
@@ -532,6 +560,17 @@
       z-index: 200;
     }
     #fab.show { display: flex; }
+
+    /* Error de carga */
+    #load-error {
+      display: none;
+      text-align: center;
+      padding: 40px 24px;
+      color: var(--text2);
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+    #load-error strong { color: var(--text); display: block; margin-bottom: 6px; }
   </style>
 </head>
 <body>
@@ -542,10 +581,16 @@
   <div class="pin-box">
     <h2>Acceso al catálogo</h2>
     <p>Ingrese la clave de acceso</p>
+    <!--
+      type="text" + inputmode="text" para que el teclado móvil
+      permita letras y números. -webkit-text-security: disc en CSS
+      oculta los caracteres visualmente (como password).
+    -->
     <input
       id="pin-input"
-      type="password"
-      autocomplete="current-password"
+      type="text"
+      inputmode="text"
+      autocomplete="off"
       autocorrect="off"
       autocapitalize="off"
       spellcheck="false"
@@ -563,7 +608,7 @@
     <div class="header-top">
       <div class="logo">Hitec <span>Catálogo</span></div>
       <div class="header-actions">
-        <button class="icon-btn" id="btn-hc" title="Alto contraste">☑</button>
+        <button class="icon-btn" id="btn-hc" title="Alto contraste">◑</button>
         <button class="icon-btn" id="btn-view" title="Cambiar vista">⊞</button>
       </div>
     </div>
@@ -576,21 +621,28 @@
   <div id="chips-wrap"></div>
   <div id="count-bar"></div>
   <div id="loading"><div class="spinner"></div> Cargando catálogo…</div>
+  <div id="load-error"></div>
   <div id="grid"></div>
   <div id="empty">Sin resultados para esta búsqueda.</div>
 
 </div>
 
-<!-- Modal video -->
-<div id="modal">
+<!-- ── MODAL DE VIDEO ── -->
+<div id="modal" role="dialog" aria-modal="true">
   <div class="modal-box">
     <div class="modal-header">
       <div class="modal-title" id="modal-title"></div>
-      <button class="modal-close" id="modal-close">✕</button>
+      <button class="modal-close" id="modal-close" aria-label="Cerrar">✕</button>
     </div>
     <div class="modal-meta" id="modal-meta"></div>
-    <div class="video-frame" id="video-frame">
-      <iframe id="modal-iframe" allowfullscreen allow="autoplay"></iframe>
+    <div class="video-wrap" id="video-wrap">
+      <div class="video-loading" id="video-loading">
+        <div class="video-spinner"></div>
+      </div>
+      <!-- iframe se inserta dinámicamente -->
+    </div>
+    <div class="modal-footer">
+      <a id="drive-link" href="#" target="_blank" rel="noopener">↗ Abrir en Google Drive</a>
     </div>
   </div>
 </div>
@@ -598,37 +650,31 @@
 <button id="fab" title="Volver arriba">↑</button>
 
 <script>
-  // ── CONFIG ──
+  // ── CONFIG ──────────────────────────────────────────────────────────
   const ACCESS_PIN = 'Hitec2025';
-  const CSV_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIZjU2WWmNm4h1w3AQCR431n9uRYgNgzDQhC4dfwo8tkMQo5Pl_usIGSU8B4pEbkz1XpuVYBAtgHZa/pub?gid=1240888412&single=true&output=csv';
 
-  // ── STATE ──
-  let videos        = [];
-  let favorites     = JSON.parse(localStorage.getItem('hc_favs') || '[]');
-  let activeChip    = null;
-  let listMode      = localStorage.getItem('hc_view') === 'list';
-  let highContrast  = localStorage.getItem('hc_hc') === '1';
-  let currentVideo  = null;
+  // URL del Sheet publicado como CSV (hoja correcta, gid=1463725900)
+  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQWbuOhAfDBTsyJKONMNcf9Lw3F6aaT1-Ovrif_ixyclRT1HeNNKdg415q4NZ74XchXvyUstM2Xfqyh/pub?gid=1463725900&single=true&output=csv';
 
-  // ── HELPERS ──
+  // ── STATE ────────────────────────────────────────────────────────────
+  let videos       = [];
+  let favorites    = JSON.parse(localStorage.getItem('hc_favs') || '[]');
+  let activeChip   = null;
+  let listMode     = localStorage.getItem('hc_view') === 'list';
+  let highContrast = localStorage.getItem('hc_hc') === '1';
+  let currentVideo = null;
 
-  // Normaliza un link: asegura que tenga https:// y formato /preview
+  // ── HELPERS ──────────────────────────────────────────────────────────
+
+  // Asegura formato /preview en links de Drive
   function normalizeLink(url) {
     if (!url) return '';
     url = url.trim();
-    // Agregar protocolo si falta
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      if (url.startsWith('//')) {
-        url = 'https:' + url;
-      } else {
-        url = 'https://' + url;
-      }
+      url = url.startsWith('//') ? 'https:' + url : 'https://' + url;
     }
-    // Asegurar que los links de Drive usen /preview (mejor para iframe)
     if (url.includes('drive.google.com') && !url.includes('/preview') && !url.includes('export=') && !url.includes('thumbnail')) {
-      // Si tiene /view, reemplazar por /preview
       url = url.replace('/view', '/preview');
-      // Si solo tiene el ID sin sufijo, agregar /preview
       if (!url.endsWith('/preview')) {
         url = url.replace(/\/file\/d\/([^/]+)\/?$/, '/file/d/$1/preview');
       }
@@ -638,16 +684,21 @@
 
   // Extrae el ID de archivo de una URL de Drive
   function extractId(url) {
-    const m = url && url.match(/\/d\/([^/?&]+)/);
+    const m = url && url.match(/\/d\/([^/?&#]+)/);
     return m ? m[1] : null;
   }
 
-  // URL de thumbnail usando Drive directamente (sin proxy externo)
+  // Genera URL de miniatura con fallback
+  // Google Drive thumbnail: funciona si el usuario tiene acceso y está logueado en Google
   function thumbUrl(fileId) {
-    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w320`;
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w400-h225`;
+  }
+  function thumbUrlFallback(fileId) {
+    // Formato alternativo de Google
+    return `https://lh3.googleusercontent.com/d/${fileId}=w400-h225`;
   }
 
-  // ── PIN LOGIC ──
+  // ── PIN ──────────────────────────────────────────────────────────────
   const pinScreen = document.getElementById('pin-screen');
   const pinInput  = document.getElementById('pin-input');
   const pinBtn    = document.getElementById('pin-btn');
@@ -672,14 +723,14 @@
   pinBtn.addEventListener('click', checkPin);
   pinInput.addEventListener('keydown', e => { if (e.key === 'Enter') checkPin(); });
 
-  // Auto-login si ya autenticó en esta sesión
+  // Auto-login si ya autenticó en esta sesión del navegador
   if (sessionStorage.getItem('hc_auth') === '1') {
     pinScreen.classList.add('hidden');
     app.classList.add('visible');
     initApp();
   }
 
-  // ── CSV PARSER ──
+  // ── CSV PARSER ───────────────────────────────────────────────────────
   function parseCSV(text) {
     const rows = [];
     let cur = '', inQ = false;
@@ -707,7 +758,7 @@
     return rows;
   }
 
-  // ── INIT ──
+  // ── INIT ─────────────────────────────────────────────────────────────
   function initApp() {
     applyPrefs();
     fetchData();
@@ -716,7 +767,6 @@
   function applyPrefs() {
     document.body.classList.toggle('hc', highContrast);
     document.getElementById('btn-hc').classList.toggle('active', highContrast);
-
     const grid = document.getElementById('grid');
     grid.classList.toggle('list-mode', listMode);
     document.getElementById('btn-view').textContent = listMode ? '⊟' : '⊞';
@@ -724,23 +774,38 @@
   }
 
   async function fetchData() {
+    const loadingEl = document.getElementById('loading');
+    const errorEl   = document.getElementById('load-error');
+    loadingEl.style.display = 'flex';
+    errorEl.style.display   = 'none';
+
+    // Agregar timestamp para evitar caché del navegador en la petición fetch
+    const url = CSV_URL + '&_t=' + Date.now();
+
     try {
-      const res  = await fetch(CSV_URL + '&t=' + Date.now());
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const text = await res.text();
       const rows = parseCSV(text);
 
-      // Primera fila = headers
-      const headers = rows[0].map(h => h.trim().toLowerCase());
-      const nameIdx = headers.findIndex(h => h.includes('nombre'));
-      const catIdx  = headers.findIndex(h => h.includes('categor'));
-      const typeIdx = headers.findIndex(h => h.includes('tipo'));
-      const equipIdx= headers.findIndex(h => h.includes('equipo'));
-      const indIdx  = headers.findIndex(h => h.includes('industria') || h.includes('rubro'));
-      const linkIdx = headers.findIndex(h => h.includes('link') || h.includes('video'));
+      if (!rows.length) throw new Error('El archivo CSV está vacío.');
+
+      // Detectar columnas por nombre de header
+      const headers  = rows[0].map(h => h.trim().toLowerCase());
+      const nameIdx  = headers.findIndex(h => h.includes('nombre'));
+      const catIdx   = headers.findIndex(h => h.includes('categor'));
+      const typeIdx  = headers.findIndex(h => h.includes('tipo'));
+      const equipIdx = headers.findIndex(h => h.includes('equipo'));
+      const indIdx   = headers.findIndex(h => h.includes('industria') || h.includes('rubro'));
+      const linkIdx  = headers.findIndex(h => h.includes('link') || h.includes('video'));
+
+      if (nameIdx === -1 || linkIdx === -1) {
+        throw new Error('No se encontraron las columnas "Nombre del Video" y "Link al Video" en el Sheet.');
+      }
 
       videos = rows.slice(1).map((r, i) => {
         const rawLink = (r[linkIdx] || '').trim();
-        const link = normalizeLink(rawLink);
+        const link    = normalizeLink(rawLink);
         return {
           id:     i,
           name:   (r[nameIdx]  || '').trim(),
@@ -748,28 +813,35 @@
           type:   (r[typeIdx]  || '').trim(),
           equip:  (r[equipIdx] || '').trim(),
           ind:    (r[indIdx]   || '').trim(),
-          link:   link,
+          link,
           fileId: extractId(link),
         };
       }).filter(v => v.name && v.link);
 
-      document.getElementById('loading').style.display = 'none';
+      loadingEl.style.display = 'none';
       buildChips();
       renderCards();
-    } catch(e) {
-      document.getElementById('loading').innerHTML =
-        '⚠️ Error al cargar el catálogo.<br><small style="opacity:.6">' + e.message + '</small>';
+
+    } catch (e) {
+      loadingEl.style.display = 'none';
+      errorEl.style.display   = 'block';
+      errorEl.innerHTML = `
+        <strong>No se pudo cargar el catálogo</strong>
+        ${e.message}<br>
+        <small style="opacity:.6">Verifique la conexión y que el Sheet esté publicado correctamente.</small>
+        <br><br>
+        <button onclick="fetchData()" style="padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;">
+          Reintentar
+        </button>`;
     }
   }
 
-  // ── CHIPS ──
+  // ── CHIPS ────────────────────────────────────────────────────────────
   function buildChips() {
     const cats = [...new Set(videos.map(v => v.cat).filter(Boolean))].sort();
     const wrap = document.getElementById('chips-wrap');
     wrap.innerHTML = '';
-
-    const allBtn = chip('Todos', null);
-    wrap.appendChild(allBtn);
+    wrap.appendChild(chip('Todos', null));
     if (favorites.length) wrap.appendChild(chip('❤ Favoritos', '__favs__'));
     cats.forEach(c => wrap.appendChild(chip(c, c)));
   }
@@ -781,15 +853,18 @@
     el.addEventListener('click', () => {
       activeChip = activeChip === value ? null : value;
       document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      el.classList.toggle('active', activeChip === value);
-      if (activeChip === null) document.querySelector('.chip').classList.add('active');
+      if (activeChip === null) {
+        document.querySelector('.chip').classList.add('active');
+      } else {
+        el.classList.add('active');
+      }
       renderCards();
     });
     if (value === null) el.classList.add('active');
     return el;
   }
 
-  // ── RENDER ──
+  // ── RENDER ───────────────────────────────────────────────────────────
   function renderCards() {
     const q     = document.getElementById('search').value.trim().toLowerCase();
     const grid  = document.getElementById('grid');
@@ -815,11 +890,7 @@
     }
 
     // Favoritos primero
-    filtered.sort((a, b) => {
-      const af = favorites.includes(a.id);
-      const bf = favorites.includes(b.id);
-      return bf - af;
-    });
+    filtered.sort((a, b) => favorites.includes(b.id) - favorites.includes(a.id));
 
     const countBar = document.getElementById('count-bar');
     countBar.textContent = filtered.length === videos.length
@@ -831,19 +902,18 @@
       return;
     }
     empty.style.display = 'none';
-
     filtered.forEach(v => grid.appendChild(buildCard(v)));
   }
 
   function buildCard(v) {
-    const isFav = favorites.includes(v.id);
-    const hasNoMeta = !v.cat && !v.type && !v.equip && !v.ind;
-    const metaStr = [v.cat, v.type].filter(Boolean).join(' · ') || (v.ind || '');
+    const isFav    = favorites.includes(v.id);
+    const hasNoMeta= !v.cat && !v.type && !v.equip && !v.ind;
+    const metaStr  = [v.cat, v.type].filter(Boolean).join(' · ') || v.ind || '';
 
     const card = document.createElement('div');
     card.className = 'card';
 
-    // Orange dot
+    // Punto naranja si no hay metadatos
     if (hasNoMeta) {
       const dot = document.createElement('div');
       dot.className = 'dot-incomplete';
@@ -858,21 +928,39 @@
     const skel = document.createElement('div');
     skel.className = 'skeleton';
 
+    const placeholder = document.createElement('div');
+    placeholder.className = 'thumb-placeholder hidden';
+    placeholder.textContent = '▶';
+
     const img = document.createElement('img');
-    img.alt = v.name;
+    img.alt     = v.name;
     img.loading = 'lazy';
+    img.decoding= 'async';
+
     if (v.fileId) {
       img.src = thumbUrl(v.fileId);
+
       img.addEventListener('load', () => {
         img.classList.add('loaded');
         skel.classList.add('hidden');
+        placeholder.classList.add('hidden');
       });
+
+      // Primer error: intentar URL alternativa
       img.addEventListener('error', () => {
-        skel.classList.add('hidden');
-        thumbWrap.style.background = 'var(--bg3)';
-      });
+        img.src = thumbUrlFallback(v.fileId);
+
+        // Segundo error: mostrar placeholder
+        img.addEventListener('error', () => {
+          skel.classList.add('hidden');
+          img.style.display = 'none';
+          placeholder.classList.remove('hidden');
+        }, { once: true });
+      }, { once: true });
+
     } else {
       skel.classList.add('hidden');
+      placeholder.classList.remove('hidden');
     }
 
     const playOver = document.createElement('div');
@@ -880,11 +968,12 @@
     playOver.innerHTML = '<div class="play-icon">▶</div>';
 
     thumbWrap.appendChild(skel);
+    thumbWrap.appendChild(placeholder);
     thumbWrap.appendChild(img);
     thumbWrap.appendChild(playOver);
 
     // Body
-    const body = document.createElement('div');
+    const body  = document.createElement('div');
     body.className = 'card-body';
 
     const title = document.createElement('div');
@@ -898,7 +987,7 @@
     body.appendChild(title);
     if (metaStr) body.appendChild(meta);
 
-    // Star
+    // Estrella favorito
     const star = document.createElement('button');
     star.className = 'star-btn' + (isFav ? ' fav' : '');
     star.textContent = isFav ? '★' : '☆';
@@ -911,13 +1000,12 @@
     card.appendChild(thumbWrap);
     card.appendChild(body);
     card.appendChild(star);
-
     card.addEventListener('click', () => openModal(v));
 
     return card;
   }
 
-  // ── FAVORITES ──
+  // ── FAVORITOS ────────────────────────────────────────────────────────
   function toggleFav(id, btn) {
     const idx = favorites.indexOf(id);
     if (idx === -1) {
@@ -935,11 +1023,12 @@
     buildChips();
   }
 
-  // ── MODAL ──
+  // ── MODAL ────────────────────────────────────────────────────────────
   function openModal(v) {
     currentVideo = v;
     document.getElementById('modal-title').textContent = v.name;
 
+    // Metadatos
     const metaEl = document.getElementById('modal-meta');
     metaEl.innerHTML = '';
     [v.cat, v.type, v.equip, v.ind].filter(Boolean).forEach(m => {
@@ -949,75 +1038,48 @@
       metaEl.appendChild(tag);
     });
 
-    // Limpiar frame anterior
-    const frame = document.getElementById('video-frame');
-    frame.innerHTML = '';
+    // Link directo a Drive (siempre visible, discreto)
+    const driveUrl = v.link.replace('/preview', '/view');
+    document.getElementById('drive-link').href = driveUrl;
 
-    const src = v.link;
+    // Limpiar iframe anterior
+    const wrap = document.getElementById('video-wrap');
+    const existingIframe = wrap.querySelector('iframe');
+    if (existingIframe) existingIframe.remove();
 
-    if (src && src.includes('drive.google.com')) {
-      // Usar iframe para Drive
-      const iframe = document.createElement('iframe');
-      iframe.id = 'modal-iframe';
-      iframe.allowFullscreen = true;
-      iframe.allow = 'autoplay';
-      iframe.src = src;
+    // Mostrar spinner de carga
+    const loadingEl = document.getElementById('video-loading');
+    loadingEl.classList.remove('hidden');
 
-      // Detectar si el iframe falla (CORS o bloqueo) y mostrar botón de apertura
-      iframe.addEventListener('error', () => showOpenButton(v));
+    // Crear iframe
+    const iframe = document.createElement('iframe');
+    iframe.allowFullscreen = true;
+    iframe.allow = 'autoplay; fullscreen';
+    iframe.src   = v.link; // Ya está en formato /preview
 
-      frame.appendChild(iframe);
+    // Ocultar spinner cuando el iframe carga
+    iframe.addEventListener('load', () => {
+      loadingEl.classList.add('hidden');
+    });
 
-      // Fallback: si después de 8 segundos el iframe sigue en blanco, mostrar botón
-      setTimeout(() => {
-        if (document.getElementById('modal').classList.contains('open') && currentVideo === v) {
-          // No podemos detectar 404 dentro del iframe por CORS, así que agregamos
-          // un botón "abrir en Drive" siempre visible debajo
-          showOpenButton(v, true);
-        }
-      }, 8000);
-
-    } else if (src) {
-      // Otro tipo de URL
-      const iframe = document.createElement('iframe');
-      iframe.id = 'modal-iframe';
-      iframe.allowFullscreen = true;
-      iframe.src = src;
-      frame.appendChild(iframe);
-    } else {
-      showOpenButton(v);
-    }
+    wrap.appendChild(iframe);
 
     document.getElementById('modal').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
 
-  function showOpenButton(v, asExtra) {
-    const frame = document.getElementById('video-frame');
-    if (asExtra) {
-      // Agregar botón debajo del iframe existente sin reemplazarlo
-      if (frame.querySelector('.open-drive-btn')) return;
-      const btn = document.createElement('a');
-      btn.className = 'open-drive-btn';
-      btn.href = v.link;
-      btn.target = '_blank';
-      btn.rel = 'noopener';
-      btn.style.cssText = 'display:block;text-align:center;padding:8px;background:var(--bg3);color:var(--accent);font-size:0.8rem;text-decoration:none;';
-      btn.textContent = '↗ Abrir video en Google Drive';
-      frame.appendChild(btn);
-    } else {
-      frame.innerHTML = `
-        <div class="modal-error">
-          <div>No se puede reproducir aquí. Abrí el video directamente en Drive.</div>
-          <a href="${v.link}" target="_blank" rel="noopener">↗ Abrir en Google Drive</a>
-        </div>`;
-    }
-  }
-
   function closeModal() {
     document.getElementById('modal').classList.remove('open');
-    document.getElementById('video-frame').innerHTML = '<iframe id="modal-iframe" allowfullscreen allow="autoplay"></iframe>';
     document.body.style.overflow = '';
+
+    // Detener el video removiendo el iframe
+    const wrap = document.getElementById('video-wrap');
+    const iframe = wrap.querySelector('iframe');
+    if (iframe) iframe.remove();
+
+    // Resetear spinner
+    document.getElementById('video-loading').classList.remove('hidden');
+
     currentVideo = null;
   }
 
@@ -1027,14 +1089,14 @@
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-  // ── SEARCH ──
+  // ── SEARCH ───────────────────────────────────────────────────────────
   let searchTimer;
   document.getElementById('search').addEventListener('input', () => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(renderCards, 220);
   });
 
-  // ── VIEW TOGGLE ──
+  // ── VIEW TOGGLE ──────────────────────────────────────────────────────
   document.getElementById('btn-view').addEventListener('click', () => {
     listMode = !listMode;
     localStorage.setItem('hc_view', listMode ? 'list' : 'grid');
@@ -1042,27 +1104,47 @@
     renderCards();
   });
 
-  // ── HIGH CONTRAST ──
+  // ── HIGH CONTRAST ────────────────────────────────────────────────────
   document.getElementById('btn-hc').addEventListener('click', () => {
     highContrast = !highContrast;
     localStorage.setItem('hc_hc', highContrast ? '1' : '0');
     applyPrefs();
   });
 
-  // ── FAB scroll to top ──
+  // ── FAB ──────────────────────────────────────────────────────────────
   const fab = document.getElementById('fab');
   window.addEventListener('scroll', () => {
     fab.classList.toggle('show', window.scrollY > 300);
   });
   fab.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-  // ── SERVICE WORKER ──
+  // ── SERVICE WORKER ───────────────────────────────────────────────────
+  // Estrategia: registrar con ?v= para que el navegador siempre
+  // verifique si cambió el archivo sw.js al desplegar una actualización.
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(r => r.unregister());
-    }).then(() => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    });
+    // Versión: actualizar este número con cada deploy
+    const SW_VERSION = '20260523';
+    navigator.serviceWorker.register('sw.js?v=' + SW_VERSION)
+      .then(reg => {
+        // Forzar verificación de actualización en cada carga de página
+        reg.update();
+        // Si hay un nuevo SW esperando, activarlo de inmediato
+        if (reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          if (newSW) {
+            newSW.addEventListener('statechange', () => {
+              if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                // Nuevo SW instalado: recargar para activarlo
+                window.location.reload();
+              }
+            });
+          }
+        });
+      })
+      .catch(err => console.warn('[SW] No se pudo registrar:', err));
   }
 </script>
 </body>
