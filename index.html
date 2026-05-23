@@ -448,37 +448,33 @@
       background: var(--modal-bg);
       z-index: 500;
       display: none;
+      /* Centrado con transform — funciona en todos los navegadores mobile */
+      overflow-y: auto;
     }
-    #modal.open {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
+    #modal.open { display: block; }
 
     .modal-box {
       background: var(--bg2);
       border-radius: var(--radius);
-      width: 100%;
+      width: calc(100% - 32px);
       max-width: 860px;
       box-shadow: 0 8px 48px rgba(0,0,0,0.7);
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      /* Centrado absoluto: siempre al centro de la pantalla */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       max-height: calc(100vh - 32px);
     }
 
-    /* Móvil: centrado y ajustado a la pantalla */
+    /* Móvil */
     @media (max-width: 768px) {
-      #modal.open {
-        padding: 12px;
-        align-items: center;
-        justify-content: center;
-      }
       .modal-box {
-        width: 100%;
-        max-width: 100%;
-        max-height: calc(100svh - 24px); /* svh = viewport real sin chrome del browser */
+        width: calc(100% - 24px);
+        max-height: calc(100svh - 24px);
         border-radius: 10px;
       }
       .modal-header { padding: 10px 12px 6px; }
@@ -544,9 +540,10 @@
     .video-loading {
       position: absolute; inset: 0;
       display: flex; align-items: center; justify-content: center;
-      background: #000;
+      background: rgba(0,0,0,0.5); /* Semi-transparente, no tapa el video */
       z-index: 1;
       pointer-events: none;
+      transition: opacity 0.4s;
     }
     .video-loading.hidden { display: none; }
     .video-spinner {
@@ -1110,6 +1107,8 @@
     iframe.addEventListener('load', () => {
       loadingEl.classList.add('hidden');
     });
+    // Fallback: ocultar spinner en móvil si el evento load no se dispara
+    setTimeout(() => loadingEl.classList.add('hidden'), 2500);
 
     wrap.appendChild(iframe);
 
