@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Catálogo de Videos · Hitec</title>
   <meta name="description" content="Catálogo de videos técnicos Hitec SRL">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#0a1c2e">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="mobile-web-app-capable" content="yes">
@@ -16,34 +16,57 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f172a;
-      --bg2: #1e293b;
-      --bg3: #334155;
-      --accent: #3b82f6;
-      --accent2: #1d4ed8;
-      --text: #f1f5f9;
-      --text2: #94a3b8;
-      --card-bg: #1e293b;
-      --card-border: #334155;
-      --chip-bg: #334155;
-      --chip-active: #3b82f6;
-      --star: #f59e0b;
-      --orange: #f97316;
-      --modal-bg: rgba(0,0,0,0.88);
-      --radius: 12px;
-      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      /* ── Fondos (navy profundo) ── */
+      --bg:  #0a1c2e;
+      --bg2: #0d2438;
+      --bg3: #163044;
+
+      /* ── Acento Hitec oficial ── */
+      --accent:       #26A591;   /* Teal oficial */
+      --accent2:      #1d8073;   /* Hover / pressed */
+      --accent-light: #00BFB3;   /* Pantone 3262C — highlights */
+      --accent-alt:   #00C389;   /* Pantone 3395C — detalle verde */
+      --accent-muted: #0e3d38;   /* Teal muy oscuro para fondos sutiles */
+
+      /* ── Texto ── */
+      --text:  #e6f4f2;          /* Blanco con tinte teal */
+      --text2: #7aada6;          /* Gris-teal apagado */
+
+      /* ── Cards y bordes ── */
+      --card-bg:     #0d2438;
+      --card-border: #1a3d4e;    /* Gris-azulado oscuro */
+
+      /* ── Chips ── */
+      --chip-bg:     #102e3e;
+      --chip-active: #26A591;
+
+      /* ── Separadores en escala de gris con tinte teal ── */
+      --sep:         #1c3444;
+      --sep-light:   rgba(38,165,145,0.12);
+
+      /* ── Otros ── */
+      --star:      #f59e0b;
+      --orange:    #f97316;
+      --modal-bg:  rgba(5,14,24,0.93);
+      --radius:    12px;
+      --shadow:    0 4px 28px rgba(0,0,0,0.55);
     }
 
     body.hc {
-      --bg: #000;
-      --bg2: #111;
-      --bg3: #222;
-      --accent: #60a5fa;
-      --text: #fff;
-      --text2: #ccc;
-      --card-bg: #111;
-      --card-border: #444;
-      --chip-bg: #222;
+      --bg:          #000;
+      --bg2:         #080f0e;
+      --bg3:         #0f201d;
+      --accent:      #2ecfb8;    /* Teal más brillante para contraste */
+      --accent2:     #23a594;
+      --accent-light:#00e5d4;
+      --accent-alt:  #00e0a0;
+      --accent-muted:#0a2e28;
+      --text:        #fff;
+      --text2:       #a0d4cc;
+      --card-bg:     #080f0e;
+      --card-border: #1a4a40;
+      --chip-bg:     #0f201d;
+      --sep:         #1a3832;
       font-size: 17px;
     }
 
@@ -152,7 +175,8 @@
     header {
       position: sticky; top: 0; z-index: 100;
       background: var(--bg);
-      border-bottom: 1px solid var(--card-border);
+      border-bottom: 1px solid transparent;
+      border-image: linear-gradient(90deg, var(--accent) 0%, var(--accent-light) 50%, var(--accent-alt) 100%) 1;
       padding: 12px 16px;
       display: flex; flex-direction: column; gap: 10px;
     }
@@ -242,6 +266,7 @@
       font-size: 0.78rem;
       color: var(--text2);
     }
+    #count-bar span { color: var(--accent-alt); font-weight: 600; }
 
     /* Grid / List */
     #grid {
@@ -262,9 +287,10 @@
       border-radius: var(--radius);
       overflow: hidden;
       cursor: pointer;
-      transition: transform 0.18s, box-shadow 0.18s;
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
       position: relative;
     }
+    .card:hover  { border-color: var(--accent); box-shadow: 0 0 0 1px var(--sep-light); }
     .card:active { transform: scale(0.97); }
 
     /* List mode card */
@@ -516,13 +542,14 @@
       color: var(--text2);
       text-align: right;
       flex-shrink: 0;
-      border-top: 1px solid var(--card-border);
+      border-top: 1px solid var(--sep);
+      background: var(--accent-muted);
     }
     .modal-footer a {
-      color: var(--accent);
+      color: var(--accent-light);
       text-decoration: none;
     }
-    .modal-footer a:hover { text-decoration: underline; }
+    .modal-footer a:hover { color: var(--accent-alt); text-decoration: underline; }
 
     /* Loading inicial */
     #loading {
@@ -556,7 +583,7 @@
       cursor: pointer;
       display: none;
       align-items: center; justify-content: center;
-      box-shadow: 0 4px 16px rgba(59,130,246,0.5);
+      box-shadow: 0 4px 16px rgba(38,165,145,0.5);
       z-index: 200;
     }
     #fab.show { display: flex; }
@@ -893,9 +920,9 @@
     filtered.sort((a, b) => favorites.includes(b.id) - favorites.includes(a.id));
 
     const countBar = document.getElementById('count-bar');
-    countBar.textContent = filtered.length === videos.length
-      ? `${videos.length} videos`
-      : `${filtered.length} de ${videos.length} videos`;
+    countBar.innerHTML = filtered.length === videos.length
+      ? `<span>${videos.length}</span> videos`
+      : `<span>${filtered.length}</span> de <span>${videos.length}</span> videos`;
 
     if (!filtered.length) {
       empty.style.display = 'block';
