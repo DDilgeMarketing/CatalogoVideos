@@ -450,7 +450,7 @@
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 12px;
     }
     #modal.open { display: flex; }
 
@@ -458,12 +458,22 @@
       background: var(--bg2);
       border-radius: var(--radius);
       width: 100%;
-      max-width: 820px;
+      max-width: 860px;
       box-shadow: 0 8px 48px rgba(0,0,0,0.7);
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      max-height: 95vh;
+      /* Se adapta a la altura disponible sin cortar el video */
+      max-height: calc(100vh - 24px);
+    }
+
+    /* En móvil: sin bordes redondeados para aprovechar toda la pantalla */
+    @media (max-width: 500px) {
+      #modal { padding: 0; align-items: flex-end; }
+      .modal-box {
+        border-radius: var(--radius) var(--radius) 0 0;
+        max-height: 92vh;
+      }
     }
     .modal-header {
       display: flex; align-items: flex-start; justify-content: space-between;
@@ -504,12 +514,14 @@
       padding: 2px 8px;
     }
 
-    /* Contenedor del video: ocupa el espacio disponible */
+    /* Contenedor del video: siempre 16:9 responsive */
     .video-wrap {
-      flex: 1;
       position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
       background: #000;
-      min-height: 200px;
+      overflow: hidden;
+      flex-shrink: 0;
     }
     .video-wrap iframe {
       position: absolute; inset: 0;
