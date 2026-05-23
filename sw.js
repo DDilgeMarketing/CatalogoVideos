@@ -1,12 +1,12 @@
 // ── SERVICE WORKER — Catálogo de Videos ─────────────────────────────
-// v3 — 2026-05-23
+// v4 — 2026-05-23
 // Estrategia:
 //   • index.html  → siempre red (garantiza actualizaciones inmediatas)
 //   • CSV         → siempre red, fallback a caché offline
 //   • thumbnails  → siempre red, sin caché (evita imágenes viejas)
 //   • resto       → caché primero, red como fallback
 
-const CACHE_NAME = 'catalogo-videos-v3';
+const CACHE_NAME = 'catalogo-videos-v4';
 const SHELL_URLS = [
   './manifest.json',
 ];
